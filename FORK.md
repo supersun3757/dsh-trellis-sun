@@ -16,11 +16,18 @@
 | `peerDependencies` | 未声明 DSH（隐式为基线） | 显式 `>=0.2.2-rc.5 <0.3.0-0` |
 | `engines` | 无 `dsh` 字段 | `dsh: ">=0.2.2-rc.5 <0.3.0-0"` + `node: ">=20"` |
 | Schemastery | 3.18.4 | 3.19.0 |
+| `peerDependenciesMeta` | 仅 `dsh-settings` optional | 8 条全部 optional（宿主提供） |
 
 **唯一一处 breaking change**：Cordis 4.1.0 的 `waterfall` 改写了尾参语义——fallback 不再收到
 dispatch 参数，而是被裸调用。`test/doc-config-route.test.js` 里的 6 处
 `(base) => base` 因此恒返回 `undefined`，改为 `() => ({ tools: [], sections: [] })`。
 生产代码不受影响（同一文件里 `test/assemble.test.js` 原本就是正确写法）。
+
+**peer 全部标记 optional**：DSH 的 `@deepseek-ai/*` 由运行时宿主提供，profile 里通常
+`autoInstallPeers: false`，因此上游那 8 条非 optional 的 peer 声明会让每次
+`pnpm install` 都报一屏 `missing peer`。平台侧同类插件（`dsh-trellis` 0.1.25）把 peers
+全标 optional 就是为了这个。实测：标完之后 `pnpm peers check` 输出
+`No peer dependency issues found`。
 
 证据：整套 317 个测试在 0.2.2-rc.5 / Cordis 4.1.0 上全绿。
 

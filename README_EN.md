@@ -70,11 +70,13 @@ After installation, **restart the DSH service**.
 > **Version compatibility**: the `@deepseek-ai/dsh-*` peer ranges a plugin declares must cover
 > the running DSH version. DSH validates those ranges both in the install preflight (before pnpm
 > runs) and at profile startup; a mismatch produces `installation rejected` and the plugin is not
-> loaded. This is a declaration problem, not a code problem: on a `0.2.0-rc.2` runtime,
-> `^0.1.7-rc.1` (= `>=0.1.7-rc.1 <0.2.0-0`) does not cover it and must be raised to
-> `^0.2.0-rc.2`. If the plugin suddenly stops working after a DSH upgrade, check the peer ranges
-> first. This repository currently targets **DSH 0.2.0-rc.2**; see
-> [`docs/ref/dsh-0.2.0-rc.2-audit.md`](docs/ref/dsh-0.2.0-rc.2-audit.md) for the audit evidence.
+> loaded. This is a declaration problem, not a code problem: upstream once left
+> `^0.1.7-rc.1` (= `>=0.1.7-rc.1 <0.2.0-0`) on a `0.2.0-rc.2` runtime and got
+> `installation rejected` outright. If the plugin suddenly stops working after a DSH upgrade,
+> check the peer ranges first. This repository targets **DSH 0.2.2-rc.5 / Cordis 4.1.0**
+> (the Cordis 4.1.0 `waterfall` tail-argument change is fixed on this branch); see
+> [FORK.md](./FORK.md) for the divergence and
+> [`docs/ref/dsh-0.2.0-rc.2-audit.md`](docs/ref/dsh-0.2.0-rc.2-audit.md) for the upstream audit evidence.
 
 ### 2. Configure Allowed Directories (Important)
 

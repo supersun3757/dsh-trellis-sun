@@ -68,9 +68,10 @@ dsh plugin --profile web add dsh-trellis-sun@latest
 > **版本兼容性**：插件声明的 `@deepseek-ai/dsh-*` peer 范围必须覆盖当前 DSH 运行时版本。
 > DSH 会在安装前置检查（pnpm 运行之前）与 profile 启动时校验该范围，不匹配会直接
 > `installation rejected` 并拒绝加载——这不是代码问题，而是声明问题：
-> 例如运行时为 `0.2.0-rc.2` 时，`^0.1.7-rc.1`（= `>=0.1.7-rc.1 <0.2.0-0`）不覆盖它，
-> 必须提升到 `^0.2.0-rc.2`。升级 DSH 后若插件突然失效，请先核对 peer 范围。
-> 本仓库当前面向 **DSH 0.2.0-rc.2**；审计证据见
+> 例如上游曾把 `^0.1.7-rc.1`（= `>=0.1.7-rc.1 <0.2.0-0`）留在 `0.2.0-rc.2` 运行时上，
+> 结果直接 `installation rejected`。升级 DSH 后若插件突然失效，请先核对 peer 范围。
+> 本仓库面向 **DSH 0.2.2-rc.5 / Cordis 4.1.0**（Cordis 4.1.0 的 `waterfall` 尾参语义变更已在本分支修掉），
+> 与上游的差异见 [FORK.md](./FORK.md)，上游 0.2.0-rc.2 的审计证据见
 > [`docs/ref/dsh-0.2.0-rc.2-audit.md`](docs/ref/dsh-0.2.0-rc.2-audit.md)。
 
 ### 2. 配置白名单目录（重要）
