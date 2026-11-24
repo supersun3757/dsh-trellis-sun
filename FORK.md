@@ -23,6 +23,18 @@ dispatch 参数，而是被裸调用。`test/doc-config-route.test.js` 里的 6 
 `(base) => base` 因此恒返回 `undefined`，改为 `() => ({ tools: [], sections: [] })`。
 生产代码不受影响（同一文件里 `test/assemble.test.js` 原本就是正确写法）。
 
+**第二处对接缺失（更严重）——只读保护曾经是静默空转**：
+上游靠 `system-prompt/assemble` 回调里裁剪 `assembled.tools` 来隐藏 `write` / `edit`。
+0.2.2-rc.5 的这个回调载荷只有 `sections` / `contexts` / `variables`，**根本没有 `tools` 字段**
+（实测打印：`keys=["sections","contexts","variables"] toolsIsArray=false`）。
+于是 `applyReadonlyPolicy(undefined, …)` 恒返回 `null`，`enforceReadonlyPlanning` 打开也拦不住任何东西——
+实测在只读状态下模型照样能调 `write` 并落盘。
+
+本分支改用注册表的按 agent 掩码：`agent.ctx.tools.restrict({ deny })`
+（`@deepseek-ai/dsh-tools` 0.2.2-rc.5 `lib/types/index.d.ts:58`），
+每轮根据授权状态重新推导 deny 列表，先撤旧掩码再上新掩码；未知/scope-local 工具名会被过滤掉，
+因为 `restrict()` 遇到不认识的全局工具名会直接抛错。`system-prompt/assemble` 仍保留 section 级裁剪与只读指令注入。
+
 **peer 全部标记 optional**：DSH 的 `@deepseek-ai/*` 由运行时宿主提供，profile 里通常
 `autoInstallPeers: false`，因此上游那 8 条非 optional 的 peer 声明会让每次
 `pnpm install` 都报一屏 `missing peer`。平台侧同类插件（`dsh-trellis` 0.1.25）把 peers

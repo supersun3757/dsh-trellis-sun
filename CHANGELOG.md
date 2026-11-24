@@ -19,6 +19,7 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 ## 兼容性
 
 - **对接 DSH 0.2.2-rc.5 / Cordis 4.1.0**：`devDependencies` 全部抬到 0.2.2-rc.5、Cordis 显式钉 4.1.0；`peerDependencies` 由隐式基线改为显式 `>=0.2.2-rc.5 <0.3.0-0`；新增上游缺失的 `engines.dsh` 与 `engines.node >=20`。
+- **修复只读保护在 0.2.2-rc.5 上静默空转**：`system-prompt/assemble` 的载荷已不含 `tools`（只剩 `sections` / `contexts` / `variables`），上游"裁剪 `assembled.tools`"的做法恒为空操作——开了 `enforceReadonlyPlanning` 也拦不住 `write`。改用注册表按 agent 的 `ctx.tools.restrict({ deny })` 掩码，每轮按授权状态重新推导并先撤旧掩码；`restrict()` 会拒绝未知 / scope-local 工具名，故 deny 列表先与全局可见工具求交。实测：只读状态下模型的工具列表里不再有 `write` / `edit` / `sun_trellis_task_update`，落盘被阻止；关闭开关后 `write` 恢复。
 - **修复 Cordis 4.1.0 的 `waterfall` 尾参语义变更**：4.1.0 起 fallback 被裸调用、不再收到 dispatch 参数，`test/doc-config-route.test.js` 中 6 处 `(base) => base` 恒返回 `undefined`，改为 `() => ({ tools: [], sections: [] })`。生产代码不受影响。
 
 ## 功能
@@ -39,6 +40,7 @@ Fork baseline: upstream `@banana-peeljj12/dsh-trellis` v0.5.1. The entries below
 ## Compatibility
 
 - **Aligned with DSH 0.2.2-rc.5 / Cordis 4.1.0**: every `devDependencies` entry is raised to 0.2.2-rc.5 and Cordis is pinned explicitly at 4.1.0; `peerDependencies` move from an implicit baseline to an explicit `>=0.2.2-rc.5 <0.3.0-0`; the missing `engines.dsh` and `engines.node >=20` fields are added.
+- **Fixed the read-only guard being a silent no-op on 0.2.2-rc.5**: the `system-prompt/assemble` payload no longer carries `tools` (only `sections` / `contexts` / `variables`), so upstream's "trim `assembled.tools`" step did nothing — `enforceReadonlyPlanning` could not stop `write`. The fork masks the registry instead via `ctx.tools.restrict({ deny })` on the agent scope, re-deriving the deny list each turn and lifting the previous mask first; `restrict()` rejects unknown / scope-local names, so the list is intersected with the globally visible tools. Verified live: with read-only on, the model's tool list no longer contains `write` / `edit` / `sun_trellis_task_update` and no file is written; with the switch off, `write` is back.
 - **Fixed the Cordis 4.1.0 `waterfall` tail-argument change**: from 4.1.0 the fallback is called bare and no longer receives the dispatch argument, so the six `(base) => base` fixtures in `test/doc-config-route.test.js` always returned `undefined`; they now return `() => ({ tools: [], sections: [] })`. Production code is unaffected.
 
 ## Features

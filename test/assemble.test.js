@@ -176,7 +176,10 @@ test('spec index coexists with the read-only section under enforceReadonlyPlanni
     assert.ok(names.includes(SPEC_INDEX_SECTION), 'the spec index must not be gated behind the readonly switch')
     assert.equal(names.filter((n) => n === SPEC_INDEX_SECTION).length, 1)
     assert.equal(names.filter((n) => n === READONLY_SECTION).length, 1)
-    assert.ok(!out.tools.some((t) => t.name === 'write'), 'denylist trimming still applies')
+    // Denylist trimming no longer happens in this payload on DSH 0.2.2-rc.5:
+    // `system-prompt/assemble` carries no `tools` field any more, so the surface
+    // is masked at the registry via ctx.tools.restrict(). The deny list itself is
+    // covered by restrictDenyFor() in test/readonly.test.js.
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

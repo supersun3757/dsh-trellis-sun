@@ -10,6 +10,7 @@ import {
   trimToolsFor,
   applyReadonlyPolicy,
   applyReadonlySections,
+  restrictDenyFor,
   readonlyInstructionFor,
   appendReadonlyInstruction,
 } from '../lib/readonly.js'
@@ -302,4 +303,18 @@ test('full-chain: authorized path yields null from every stage (byte-identical a
   assert.equal(tools, null)
   assert.equal(sections, null)
   assert.equal(instruction, null)
+})
+
+
+test('restrictDenyFor mirrors the trim sets and yields null for authorized', () => {
+  // The registry mask (ctx.tools.restrict) needs a plain array, and the
+  // authorized state must yield null so the caller lifts any previous mask
+  // instead of applying an empty one (restrict({}) is rejected as a no-op).
+  assert.deepEqual(restrictDenyFor('no_task'), [...UNDECIDED_TRIM])
+  assert.deepEqual(restrictDenyFor('planning'), [...PLANNING_TRIM])
+  assert.deepEqual(restrictDenyFor('planning-inline'), [...PLANNING_TRIM])
+  assert.equal(restrictDenyFor('in_progress'), null)
+  assert.equal(restrictDenyFor('completed'), null)
+  assert.equal(restrictDenyFor('no_task', true), null)
+  for (const name of restrictDenyFor('no_task')) assert.equal(typeof name, 'string')
 })
