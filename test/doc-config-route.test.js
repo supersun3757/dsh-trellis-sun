@@ -202,7 +202,7 @@ test('save writes doc.json and the next assembly reads it without waiting for th
     const { root: ctx, call } = await mountRoute({ cwd: root })
 
     // Prime the per-root memo with "no spec at all" before the save.
-    const before = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, (base) => base)
+    const before = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, () => ({ tools: [], sections: [] }))
     assert.equal(before.sections.some((section) => section.name === SPEC_INDEX_SECTION), false)
 
     const saved = await call({
@@ -216,7 +216,7 @@ test('save writes doc.json and the next assembly reads it without waiting for th
     assert.ok(text.endsWith('\n'))
     assert.deepEqual(JSON.parse(text), { root: 'docs', files: ['docs/a.md'] })
 
-    const after = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, (base) => base)
+    const after = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, () => ({ tools: [], sections: [] }))
     const section = after.sections.find((item) => item.name === SPEC_INDEX_SECTION)
     assert.ok(section, 'the saved config must be injected on the very next assembly')
     assert.match(section.text, /# A body/)
@@ -289,7 +289,7 @@ test('a saved budget override reaches the very next assembly', async () => {
       fileKB: 4,
     })
 
-    const assembled = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, (base) => base)
+    const assembled = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, () => ({ tools: [], sections: [] }))
     const section = assembled.sections.find((item) => item.name === SPEC_INDEX_SECTION)
     assert.ok(section, 'the saved config must be injected on the very next assembly')
     assert.match(section.text, /单文件上限 4KB，正文合计上限 32KB/)
@@ -307,7 +307,7 @@ test('a saved budget override reaches the very next assembly', async () => {
     })
     assert.equal(cleared.status, 200)
     assert.equal('budgets' in JSON.parse(readFileSync(path.join(root, '.trellis', 'doc.json'), 'utf8')), false)
-    const afterClear = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, (base) => base)
+    const afterClear = await ctx.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, () => ({ tools: [], sections: [] }))
     const clearedSection = afterClear.sections.find((item) => item.name === SPEC_INDEX_SECTION)
     assert.match(clearedSection.text, /单文件上限 8KB，正文合计上限 32KB/)
   } finally {
@@ -322,14 +322,14 @@ test('the settings budget drives the header and is part of the memo key', async 
     seed(root, '.trellis/doc.json', JSON.stringify({ files: ['docs/a.md'] }))
 
     const small = await mountRoute({ cwd: root, config: { docFileBudgetKB: 2, docTotalBudgetKB: 8 } })
-    const headSmall = await small.root.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, (base) => base)
+    const headSmall = await small.root.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, () => ({ tools: [], sections: [] }))
     const smallSection = headSmall.sections.find((item) => item.name === SPEC_INDEX_SECTION)
     assert.match(smallSection.text, /单文件上限 2KB，正文合计上限 8KB/)
 
     // A second mount with a DIFFERENT budget must not reuse the first text:
     // the memo key carries the budget, not just the project root.
     const large = await mountRoute({ cwd: root, config: { docFileBudgetKB: 16, docTotalBudgetKB: 32 } })
-    const headLarge = await large.root.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, (base) => base)
+    const headLarge = await large.root.waterfall('system-prompt/assemble', { tools: [], sections: [] }, {}, () => ({ tools: [], sections: [] }))
     const largeSection = headLarge.sections.find((item) => item.name === SPEC_INDEX_SECTION)
     assert.match(largeSection.text, /单文件上限 16KB，正文合计上限 32KB/)
 
