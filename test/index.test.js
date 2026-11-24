@@ -836,7 +836,7 @@ test('updateTaskRecord and archiveTaskRecord enforce git cleanliness in git repo
 test('modified_files tool descriptions clarify call-time credential (NOT persisted)', () => {
   const indexPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'lib', 'index.js')
   const source = readFileSync(indexPath, 'utf8')
-  // Both trellis_task_update and trellis_task_archive must carry the credential
+  // Both sun_trellis_task_update and sun_trellis_task_archive must carry the credential
   // semantics so agents do not expect the field to be persisted into task.json.
   const matches = source.match(/NOT persisted into `task\.json`/g) || []
   assert.ok(matches.length >= 2, `expected >=2 occurrences of NOT persisted, got ${matches.length}`)

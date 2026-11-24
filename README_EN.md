@@ -1,4 +1,4 @@
-# dsh-trellis
+# dsh-trellis-sun
 
 <div align="center">
   <b style="font-size: 1.3em;">Trellis Workflow Extension for DeepSeek Harness</b><br />
@@ -15,16 +15,18 @@
 
 ---
 
+> **sun-Trellis fork** — this repo is forked from upstream `@banana-peeljj12/dsh-trellis` v0.5.1 and tracks DSH 0.2.2-rc.5 / Cordis 4.1.0. The package is published as `dsh-trellis-sun`; bundled skills are prefixed `sun-trellis-*` and bundled tools `sun_trellis_*`, so they coexist with an existing Trellis skill set instead of overwriting it. See [FORK.md](./FORK.md) for the divergence list.
+
 ## Overview
 
-`dsh-trellis` is an engineering workflow extension for [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness), inspired by the stage specifications and state machine design of [Trellis](https://github.com/mindfold-ai/trellis).
+`dsh-trellis-sun` is an engineering workflow extension for [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness), inspired by the stage specifications and state machine design of [Trellis](https://github.com/mindfold-ai/trellis).
 
 In complex, multi-turn AI coding workflows, typical pain points include:
 1. **Writing code without a clear design**: Jumping directly into implementation often causes structural drift or regressions.
 2. **Fragmented task checklists**: Maintaining separate checklists across different notes or files leads to state divergence.
 3. **Missing quality verification**: Marking tasks as done without running tests or consulting human reviewers.
 
-`dsh-trellis` addresses these issues through a unified step state machine, explicit stage progressions, and runtime tool filtering to ensure that models follow a disciplined "plan first, implement later, verify before closing" workflow.
+`dsh-trellis-sun` addresses these issues through a unified step state machine, explicit stage progressions, and runtime tool filtering to ensure that models follow a disciplined "plan first, implement later, verify before closing" workflow.
 
 ---
 
@@ -36,7 +38,7 @@ In complex, multi-turn AI coding workflows, typical pain points include:
 - **Optional Read-Only Planning**: When enabled via settings, code-writing tools (`write` / `edit`) are filtered out during planning phases, leaving only a sandboxed artifact channel for design documentation.
 - **Session-Level Isolation**: Session pointers are stored independently under `.trellis/.runtime/sessions/`, preventing multi-session or subagent race conditions.
 - **Dual-Mode Task Board (Visual Language v2)**: A compact task popover by default (active bound task pinned at the top as a hero card with an inline step checklist; open tasks grouped cleanly by status below), expanding into a full-screen board (tasks grouped by In Progress / Planning / Completed with `⌘K` search and workflow filters); the right-hand details drawer provides a **Step Tracker checklist**, stage track nodes, and an artifact file list. The board adheres to a **single-accent color system** and **restrained interaction** — it never mutates task state directly; the only advance path is the **Advance Task** button injecting an instruction into the composer for the Agent to execute, and artifact clicks produce native `@.trellis/tasks/...` file references handled by DSH.
-- **Git Cleanliness Check (scoped mode supported)**: Automatically verifies that the Git working tree is clean and committed before closing or archiving a task. When the working tree contains uncommitted changes unrelated to the current task, pass the task's actual changed files via `modified_files` to `trellis_task_update` / `trellis_task_archive`: the check then scopes to those files (which must themselves be committed), and uncommitted changes outside the list only emit a warning instead of blocking. Omitting the parameter keeps the global strict check.
+- **Git Cleanliness Check (scoped mode supported)**: Automatically verifies that the Git working tree is clean and committed before closing or archiving a task. When the working tree contains uncommitted changes unrelated to the current task, pass the task's actual changed files via `modified_files` to `sun_trellis_task_update` / `sun_trellis_task_archive`: the check then scopes to those files (which must themselves be committed), and uncommitted changes outside the list only emit a warning instead of blocking. Omitting the parameter keeps the global strict check.
 
 ---
 
@@ -47,7 +49,7 @@ In complex, multi-turn AI coding workflows, typical pain points include:
 Ensure Node.js ≥ 20 is installed, then run in your terminal:
 
 ```sh
-dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
+dsh plugin --profile web add dsh-trellis-sun@latest
 ```
 
 After installation, **restart the DSH service**.
@@ -58,7 +60,7 @@ After installation, **restart the DSH service**.
 > hard-coded as protected). Use the CLI shipped inside the app instead:
 >
 > ```sh
-> & "F:\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add link:F:\dsh-plugins\dsh-trellis
+> & "F:\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add link:F:\dsh-plugins\dsh-trellis-sun
 > ```
 >
 > For a local development checkout, install it as `link:<absolute repo path>`. Afterwards
@@ -78,7 +80,7 @@ After installation, **restart the DSH service**.
 
 By default, the plugin will not intercept any unconfigured workspaces. Add your target workspace directory to the allowlist:
 
-1. Open the DSH Web UI, click the **Plugins** icon on the left sidebar, and click **@banana-peeljj12/dsh-trellis** under the **Installed** tab to enter its detail page (the configuration form is rendered directly on the top-level plugin detail page, without needing to expand "Included Components");
+1. Open the DSH Web UI, click the **Plugins** icon on the left sidebar, and click **dsh-trellis-sun** under the **Installed** tab to enter its detail page (the configuration form is rendered directly on the top-level plugin detail page, without needing to expand "Included Components");
 2. Under **Allowed Projects (allowlist)**, add the absolute path of your workspace root directory — either type it manually or click **Browse…** to pick a folder via the system folder picker, then click Save (hot-reloaded).
 
 > **Note**: To prevent the model from editing source code prior to plan approval, enable **Enforce Read-Only Planning (`enforceReadonlyPlanning`)** on the same detail page.
@@ -120,7 +122,7 @@ The `steps` array in `task.json` serves as the execution list and supports 5 sta
 - `completed`: Verified and closed.
 
 #### Verification Modes:
-- **Automated Verification (`verification: 'ai'`)**: The model must run test commands and record `verified: true` with `verificationNotes` evidence via `trellis_task_update` in an initial call before the step can be marked `completed` in a subsequent call.
+- **Automated Verification (`verification: 'ai'`)**: The model must run test commands and record `verified: true` with `verificationNotes` evidence via `sun_trellis_task_update` in an initial call before the step can be marked `completed` in a subsequent call.
 - **Human Approval Gate (`verification: 'human'`)**: Reserved for critical or high-risk changes. The step cannot be marked `completed` unless confirmed by the user and saved with `verifiedBy: 'human'`.
 - **Completion Audit**: When closing or archiving a task, the plugin validates that all steps are completed and verified, and that the Git working tree is clean.
 
@@ -154,11 +156,11 @@ When `enforceReadonlyPlanning: true` is configured, the plugin TRIMS ONLY the sp
 
 | Authorization State | Condition | Trimmed Tools | Description |
 |---|---|---|---|
-| `undecided` | In allowlist, no active task, not skipped | `write` / `edit` + `trellis_task_update` / `trellis_artifact_update` / `trellis_task_archive` / `trellis_ui_update` | Removes code-write and task-write tools to avoid blindly rewriting source; `trellis_task_create` / `trellis_task_skip` and all other tools (including other plugins') are kept |
-| `planning` | Task is in planning stages (`prd`, `design`, `scan`, `report`) | `write` / `edit` + `trellis_task_create` / `trellis_task_skip` / `trellis_task_archive` / `trellis_ui_update` | Removes generic `write` / `edit` tools and task-lifecycle tools; deliverables can only be updated through the artifact tool; `trellis_task_update` / `trellis_artifact_update` and all other tools are kept |
+| `undecided` | In allowlist, no active task, not skipped | `write` / `edit` + `sun_trellis_task_update` / `sun_trellis_artifact_update` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | Removes code-write and task-write tools to avoid blindly rewriting source; `sun_trellis_task_create` / `sun_trellis_task_skip` and all other tools (including other plugins') are kept |
+| `planning` | Task is in planning stages (`prd`, `design`, `scan`, `report`) | `write` / `edit` + `sun_trellis_task_create` / `sun_trellis_task_skip` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | Removes generic `write` / `edit` tools and task-lifecycle tools; deliverables can only be updated through the artifact tool; `sun_trellis_task_update` / `sun_trellis_artifact_update` and all other tools are kept |
 | `authorized` | Task is in implementation stages (`impl`, `fix`, `apply`) or skipped | None (no trimming) | Restores the full tool surface |
 
-> Note: `trellis_artifact_update` only permits writing whitelisted documentation inside the active task directory (`.trellis/tasks/<slug>/`), preventing path traversal.
+> Note: `sun_trellis_artifact_update` only permits writing whitelisted documentation inside the active task directory (`.trellis/tasks/<slug>/`), preventing path traversal.
 
 ---
 
@@ -166,19 +168,19 @@ When `enforceReadonlyPlanning: true` is configured, the plugin TRIMS ONLY the sp
 
 The plugin registers the following specialized tools:
 
-- **`trellis_task_create`**: Creates a new task with initial `task.json`, seeds templates, and binds to the current session.
-- **`trellis_task_update`**: Advances task stages, updates step progress, records verification evidence, or modifies task metadata without changing the current session binding. An explicit `slug` selects only the update target; use the board's activate button to switch tasks.
-- **`trellis_artifact_update`**: Safely updates task planning documents (such as `prd.md`, `design.md`, `check.md`), restricted by path and filename whitelists.
-- **`trellis_task_archive`**: Archives a completed task to `.trellis/tasks/archive/YYYY-MM/` and unbinds the session.
-- **`trellis_task_skip`**: Skips the Trellis workflow for the active session upon user approval, unlocking write tools.
-- **`trellis_state`**: Inspects and reports Trellis runtime state and task information for the current workspace.
-- **`trellis_ui_update`**: Manually refreshes the web header phase chip.
+- **`sun_trellis_task_create`**: Creates a new task with initial `task.json`, seeds templates, and binds to the current session.
+- **`sun_trellis_task_update`**: Advances task stages, updates step progress, records verification evidence, or modifies task metadata without changing the current session binding. An explicit `slug` selects only the update target; use the board's activate button to switch tasks.
+- **`sun_trellis_artifact_update`**: Safely updates task planning documents (such as `prd.md`, `design.md`, `check.md`), restricted by path and filename whitelists.
+- **`sun_trellis_task_archive`**: Archives a completed task to `.trellis/tasks/archive/YYYY-MM/` and unbinds the session.
+- **`sun_trellis_task_skip`**: Skips the Trellis workflow for the active session upon user approval, unlocking write tools.
+- **`sun_trellis_state`**: Inspects and reports Trellis runtime state and task information for the current workspace.
+- **`sun_trellis_ui_update`**: Manually refreshes the web header phase chip.
 
 ---
 
 ## Configuration Reference
 
-Configure via the Web UI (sidebar **Plugins** icon → **@banana-peeljj12/dsh-trellis** detail page) or in `~/.dsh/settings.yaml`:
+Configure via the Web UI (sidebar **Plugins** icon → **dsh-trellis-sun** detail page) or in `~/.dsh/settings.yaml`:
 
 | Key | Type | Default | Description |
 |---|---|---|---|
@@ -211,10 +213,10 @@ A project can declare the Markdown files Trellis should read in `.trellis/doc.js
 - `files`: the runtime injection whitelist. Every entry is a project-relative Markdown file path. Multiple files are supported, injected in order, and deduplicated. **Bodies are injected**, not paths.
 - `budgets` (optional): this project's own injection budget in KB — write only the field you want to override. Precedence: **`budgets` in `doc.json` > the `docFileBudgetKB` / `docTotalBudgetKB` settings > built-in 8KB / 32KB**, with hard caps of 128KB per file and 512KB in total (out-of-range values are clamped). `0`, negative numbers or non-numbers count as "not configured" and fall through to the next source.
 - **Budgets**: per-file and total caps (default 8KB / 32KB, UTF-8 bytes). Anything over the budget is truncated and marked `truncated / over budget — read <path>` so the model can fetch the rest; unreadable files are marked with their path too. The prompt header echoes the caps actually in effect.
-- `root`: Skill metadata only. `trellis-spec-bootstrap` and `trellis-update-spec` use it as the default documentation root for discovery and updates. It neither prefixes nor filters `files`, and changing it never changes runtime injection.
+- `root`: Skill metadata only. `sun-trellis-spec-bootstrap` and `sun-trellis-update-spec` use it as the default documentation root for discovery and updates. It neither prefixes nor filters `files`, and changing it never changes runtime injection.
 - Without `.trellis/doc.json`, the legacy `.trellis/spec/` scan is preserved (index only, no bodies). Once explicitly configured, unlisted legacy Specs are no longer injected.
 - An invalid explicit config produces a short repair diagnostic instead of silently falling back to the legacy tree.
-- Add any new long-lived injected document to `files`. Existing Docs projects can use the migration branch of `trellis-spec-bootstrap`; new projects use its initialization branch.
+- Add any new long-lived injected document to `files`. Existing Docs projects can use the migration branch of `sun-trellis-spec-bootstrap`; new projects use its initialization branch.
 - **Visual editor**: switch to **"Project docs"** in the conversation's top-level view bar (next to Chat / Trajectory / Git) to view and edit the current project's `.trellis/doc.json`: add, remove and reorder files, edit the project's own "Injection budget" (per-file / total KB — blank inherits the plugin setting, an invalid value is marked inline and blocks saving), see each file's injection status (full body / truncated to the effective cap / path only) and budget usage, and seed a first draft from the existing `.trellis/spec` index when nothing is configured. A save takes effect on the very next injection — no restart.
 
 ---
@@ -222,7 +224,7 @@ A project can declare the Markdown files Trellis should read in `.trellis/doc.js
 ## Repository Structure
 
 ```text
-dsh-trellis/
+dsh-trellis-sun/
 ├── lib/
 │   ├── index.js            # Plugin entry: registers pre-step hooks, tool filtering, and API routes
 │   ├── task.js             # Task engine: step state machine, verification gates, and audits

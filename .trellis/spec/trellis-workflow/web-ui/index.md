@@ -48,11 +48,11 @@
 
 - 工具 execute 返回对象含 undefined 可选字段 → `ToolOutputError`（见约定 2）。
 - `slots.register` 裸调用在声明方未加载时抛错（见约定 1，用 `slots.inject` 包裹）。
-- **徽标缓存刷新链路**：Web 徽标只消费 host 缓存；缓存写入点有 `trellis_ui_update`
-  工具、`trellis_task_create`（建任务成功后即时刷新本会话摘要）与每轮 `agent/pre-step`
+- **徽标缓存刷新链路**：Web 徽标只消费 host 缓存；缓存写入点有 `sun_trellis_ui_update`
+  工具、`sun_trellis_task_create`（建任务成功后即时刷新本会话摘要）与每轮 `agent/pre-step`
   顺带刷新（现已在 `lib/index.js` 的 pre-step 中实现，命中 allowlist 的会话每轮自动刷新
   缓存）。曾踩坑：仅靠模型自觉调用工具时，创建任务后 UI 长期不刷新——pre-step 刷新是
-  兜底，模型在阶段切换/建任务后仍应调用 `trellis_ui_update` 以获得当轮即时刷新。
+  兜底，模型在阶段切换/建任务后仍应调用 `sun_trellis_ui_update` 以获得当轮即时刷新。
 - Web UI 是否可见依赖 allowlist：`F:\dsh-plugins\dsh-trellis` 不在
   `C:\Users\12644\.dsh\settings.yaml` 的 `trellis-workflow.allowlist` 时，该会话徽标按
   `no-match` 隐藏（属配置，非缺陷）；验证 UI 需把项目根加入 allowlist 并**重启 DSH**
@@ -73,7 +73,7 @@
    `<sessionFileBasename(sessionId)>.json` 存在时以其 `current_task` 为准（含显式
    `null` = 已解绑，**不回退** canonical）；文件不存在（legacy 会话）才回退
    `activeTaskPointer` 项目级选择。`resolveProjectState` 带 sessionId 解析——
-   面包屑/trellis_state/chip 摘要三处一致，并行会话各绑各的任务互不覆盖。
+   面包屑/sun_trellis_state/chip 摘要三处一致，并行会话各绑各的任务互不覆盖。
 8. **看板 API**：`POST /trellis-workflow/api/board`（读取，trust-fence + 会话存活 +
    header.cwd → allowlist；浏览器触发时允许直接 fs 读取，因其由用户显式打开、低频）；
    `POST /trellis-workflow/api/bind`（变更）：请求只带 `{sessionId, taskSlug|null}`；

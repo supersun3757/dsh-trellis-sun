@@ -72,7 +72,7 @@ async function mount(t, fs, config = {}) {
   ctx.provide('tools', {
     register(definition) {
       tools.set(definition.name, definition)
-      if (definition.name === 'trellis_ui_update') markReady()
+      if (definition.name === 'sun_trellis_ui_update') markReady()
       return () => tools.delete(definition.name)
     },
   })
@@ -109,8 +109,8 @@ test('artifact tool writes PRD to the creating session, not the canonical old ta
   const { call } = await mount(t, fs)
   // A legacy/project pointer must not override the live session's new binding.
   await createTaskRecord(fs, ROOT, createArgs(OLD))
-  assert.equal((await call('trellis_task_create', createArgs(NEW))).ok, true)
-  const result = await call('trellis_artifact_update', { artifact: 'prd.md', content: '# New PRD' })
+  assert.equal((await call('sun_trellis_task_create', createArgs(NEW))).ok, true)
+  const result = await call('sun_trellis_artifact_update', { artifact: 'prd.md', content: '# New PRD' })
   assert.equal(result.ok, true)
   assert.equal(result.slug, NEW)
   assert.equal(await fs.readText(await fs.resolve(`${ROOT}/.trellis/tasks/${NEW}/prd.md`)), '# New PRD')
@@ -118,7 +118,7 @@ test('artifact tool writes PRD to the creating session, not the canonical old ta
   assert.equal(await active(fs), NEW)
 
   // An explicit target still wins without changing the session binding.
-  const explicit = await call('trellis_artifact_update', { slug: OLD, artifact: 'prd.md', content: '# Explicit PRD' })
+  const explicit = await call('sun_trellis_artifact_update', { slug: OLD, artifact: 'prd.md', content: '# Explicit PRD' })
   assert.equal(explicit.slug, OLD)
   assert.equal(await fs.readText(await fs.resolve(`${ROOT}/.trellis/tasks/${OLD}/prd.md`)), '# Explicit PRD')
   assert.equal(await active(fs), NEW)
@@ -165,12 +165,12 @@ test('updating an unbound task does not implicitly activate it', async () => {
 test('host update keeps the active summary when modifying another task', { timeout: 5000 }, async (t) => {
   const fs = memoryFs()
   const { call, summary } = await mount(t, fs)
-  assert.equal((await call('trellis_task_create', createArgs(OLD))).ok, true)
-  assert.equal((await call('trellis_task_create', createArgs(NEW))).ok, true)
-  const result = await call('trellis_task_update', { slug: OLD, title: 'Old updated' })
+  assert.equal((await call('sun_trellis_task_create', createArgs(OLD))).ok, true)
+  assert.equal((await call('sun_trellis_task_create', createArgs(NEW))).ok, true)
+  const result = await call('sun_trellis_task_update', { slug: OLD, title: 'Old updated' })
   assert.equal(result.ok, true)
   assert.equal((await summary()).title, NEW)
-  assert.equal((await call('trellis_task_update', { title: 'New updated' })).ok, true)
+  assert.equal((await call('sun_trellis_task_update', { title: 'New updated' })).ok, true)
   assert.equal((await summary()).title, 'New updated')
   assert.equal(await active(fs), NEW)
 })
@@ -178,12 +178,12 @@ test('host update keeps the active summary when modifying another task', { timeo
 test('host late old update cannot replace the newer binding or summary', { timeout: 5000 }, async (t) => {
   const fs = memoryFs()
   const { call, summary } = await mount(t, fs)
-  await call('trellis_task_create', createArgs(OLD))
+  await call('sun_trellis_task_create', createArgs(OLD))
   const pendingWrite = gate()
   fs.beforeWrite = (p) => p.endsWith(`/${OLD}/task.json`) ? pendingWrite.pause() : undefined
-  const pending = call('trellis_task_update', { title: 'Late update' })
+  const pending = call('sun_trellis_task_update', { title: 'Late update' })
   await pendingWrite.reached
-  try { await call('trellis_task_create', createArgs(NEW)) } finally { pendingWrite.release() }
+  try { await call('sun_trellis_task_create', createArgs(NEW)) } finally { pendingWrite.release() }
   assert.equal((await pending).ok, true)
   assert.equal((await summary()).title, NEW)
   assert.equal(await active(fs), NEW)
@@ -193,11 +193,11 @@ for (const taskSlug of [NEW, null]) {
   test(`explicit bind(${taskSlug}) survives a captured old refresh`, { timeout: 5000 }, async (t) => {
     const fs = memoryFs()
     const { call, summary, request } = await mount(t, fs)
-    await call('trellis_task_create', createArgs(NEW))
-    await call('trellis_task_create', createArgs(OLD))
+    await call('sun_trellis_task_create', createArgs(NEW))
+    await call('sun_trellis_task_create', createArgs(OLD))
     const oldRead = gate()
     fs.afterRead = (p) => p.endsWith(`/${OLD}/task.json`) ? oldRead.pause() : undefined
-    const pending = call('trellis_ui_update')
+    const pending = call('sun_trellis_ui_update')
     await oldRead.reached
     try {
       const bound = await request('bind', { taskSlug })
@@ -214,11 +214,11 @@ for (const taskSlug of [OLD, null]) {
   test(`late create completion respects newer bind(${taskSlug})`, { timeout: 5000 }, async (t) => {
     const fs = memoryFs()
     const { call, summary, request } = await mount(t, fs)
-    await call('trellis_task_create', createArgs(OLD))
+    await call('sun_trellis_task_create', createArgs(OLD))
     const committed = gate()
     fs.afterWrite = (p, text) => p.endsWith(`/sessions/${SESSION}.json`) && JSON.parse(text).current_task === `.trellis/tasks/${NEW}`
       ? committed.pause() : undefined
-    const pending = call('trellis_task_create', createArgs(NEW))
+    const pending = call('sun_trellis_task_create', createArgs(NEW))
     await committed.reached
     try { await request('bind', { taskSlug }) } finally { committed.release() }
     assert.equal((await pending).ok, true)
@@ -231,12 +231,12 @@ for (const taskSlug of [OLD, null]) {
 test('late skip completion does not hide a newer explicit binding', { timeout: 5000 }, async (t) => {
   const fs = memoryFs()
   const { call, summary, request } = await mount(t, fs)
-  await call('trellis_task_create', createArgs(OLD))
+  await call('sun_trellis_task_create', createArgs(OLD))
   await request('bind', { taskSlug: null })
   const committed = gate()
   fs.afterWrite = (p, text) => p.endsWith(`/sessions/${SESSION}.json`) && JSON.parse(text).skipped === true
     ? committed.pause() : undefined
-  const pending = call('trellis_task_skip')
+  const pending = call('sun_trellis_task_skip')
   await committed.reached
   try { await request('bind', { taskSlug: OLD }) } finally { committed.release() }
   assert.equal((await pending).ok, true)
@@ -251,7 +251,7 @@ test('cache miss uses actual session binding and configured inline phase', { tim
   const initial = await summary()
   assert.equal(initial.title, OLD)
   assert.equal(initial.phase, 'planning-inline')
-  assert.equal((await call('trellis_task_update', { title: 'Current updated' })).ok, true)
+  assert.equal((await call('sun_trellis_task_update', { title: 'Current updated' })).ok, true)
   assert.equal((await summary()).title, 'Current updated')
   assert.equal((await summary()).phase, 'planning-inline')
 })
@@ -259,12 +259,12 @@ test('cache miss uses actual session binding and configured inline phase', { tim
 test('a captured old summary read cannot repopulate cache after create', { timeout: 5000 }, async (t) => {
   const fs = memoryFs()
   const { call, summary } = await mount(t, fs)
-  await call('trellis_task_create', createArgs(OLD))
+  await call('sun_trellis_task_create', createArgs(OLD))
   const oldRead = gate()
   fs.afterRead = (p) => p.endsWith(`/${OLD}/task.json`) ? oldRead.pause() : undefined
-  const pending = call('trellis_ui_update')
+  const pending = call('sun_trellis_ui_update')
   await oldRead.reached
-  try { await call('trellis_task_create', createArgs(NEW)) } finally { oldRead.release() }
+  try { await call('sun_trellis_task_create', createArgs(NEW)) } finally { oldRead.release() }
   await pending
   assert.equal((await summary()).title, NEW)
   assert.equal(await active(fs), NEW)

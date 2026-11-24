@@ -1,9 +1,9 @@
 ---
-name: trellis-brainstorm
+name: sun-trellis-brainstorm
 description: "在实施前引导协作式需求发现与方案规划：贯彻简洁设计理念，每次聚焦澄清一个核心问题，深入代码调研，收敛产出规划产物（prd.md，复杂任务辅以 design.md）。"
 ---
 
-# trellis-brainstorm
+# sun-trellis-brainstorm
 
 在任务规划阶段（planning）使用本技能：明确需求与边界、编写技术设计方案、录入步骤清单，**必须获得用户明确批准后才能开始编码**。
 
@@ -30,10 +30,10 @@ description: "在实施前引导协作式需求发现与方案规划：贯彻简
 4. **更新 PRD**：用户回复后，更新 `prd.md`，重新评估待决清单，循环推进。
 5. **起草方案与录入步骤（待决事项清零后）**：
    - 复杂任务起草 `design.md`（模块边界、核心数据流、对外契约、验证命令、风险与回滚预案；简单任务可仅保留 PRD）；
-   - 通过 `trellis_task_update` 将步骤清单录入 `task.json.steps`，每步明确验收标准与验证方式（`verification: 'ai' | 'human'`）。
+   - 通过 `sun_trellis_task_update` 将步骤清单录入 `task.json.steps`，每步明确验收标准与验证方式（`verification: 'ai' | 'human'`）。
 6. **执行需求收敛检查**：对照下方门禁清单逐项核对。
 7. **呈现总结并等待批准**：向用户呈现最终规划总结并**立刻停住（stop）**，切勿直接开始实现。
-8. **用户明确回复批准（Approve）后**：调 `trellis_task_update(status: 'in_progress')`，切入实施阶段。若方案发生实质变更，必须重新确认。
+8. **用户明确回复批准（Approve）后**：调 `sun_trellis_task_update(status: 'in_progress')`，切入实施阶段。若方案发生实质变更，必须重新确认。
 
 ## 提问规则
 
@@ -46,7 +46,7 @@ description: "在实施前引导协作式需求发现与方案规划：贯彻简
 
 - `prd.md`：目标与业务价值、已确认事实、核心需求、验收标准、排除范围（Non-goals）、阻塞性开放问题。
 - `design.md`：基于需求的工程技术拆解与落地实现方案（涉及模块与边界、核心数据流、对外契约变更、关键技术选型与取舍、可执行验证命令、风险与回滚）。
-- `task.json.steps`：由 `trellis_task_update` 录入并维护，包含具体执行步骤、每步的验收条件与验证模式。
+- `task.json.steps`：由 `sun_trellis_task_update` 录入并维护，包含具体执行步骤、每步的验收条件与验证模式。
 
 ## 需求收敛检查清单（发起人审前必查）
 

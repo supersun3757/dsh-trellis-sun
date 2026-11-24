@@ -1,9 +1,9 @@
 ---
-name: trellis-before-dev
+name: sun-trellis-before-dev
 description: "在实施阶段修改代码前，研读项目规范与任务规划产物，确保代码改动严格遵循既定架构约定与需求标准。"
 ---
 
-# trellis-before-dev
+# sun-trellis-before-dev
 
 在方案获批、正式切入实施阶段（in_progress）修改代码前加载本技能。使所有编码工作严格建立在项目工程规范与已获批的规划产物基础之上，严禁凭主观习惯随意发挥。
 

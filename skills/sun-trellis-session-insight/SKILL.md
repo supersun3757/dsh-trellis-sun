@@ -1,9 +1,9 @@
 ---
-name: trellis-session-insight
+name: sun-trellis-session-insight
 description: "解读运行时会话与任务状态：深度诊断 Trellis 工作流当前所处位置，包括活跃任务、状态、相位及诊断信息。"
 ---
 
-# trellis-session-insight
+# sun-trellis-session-insight
 
 在采取行动前，使用本技能通过对磁盘运行时资产的精准探测，掌握 Trellis 工作流的准确当前状态。
 
@@ -35,4 +35,4 @@ description: "解读运行时会话与任务状态：深度诊断 Trellis 工作
 ## 硬性卡点
 
 1. **会话文件是“哪个任务活跃”的绝对事实源**：即使磁盘存在任务目录，只要会话指针未绑定，就属于 `no_task`。
-2. **拒绝孤立看待面包屑字符串**：在关键决策时务必通过 `trellis_state` 或直接查阅任务元数据与磁盘产物事实予以确证。
+2. **拒绝孤立看待面包屑字符串**：在关键决策时务必通过 `sun_trellis_state` 或直接查阅任务元数据与磁盘产物事实予以确证。

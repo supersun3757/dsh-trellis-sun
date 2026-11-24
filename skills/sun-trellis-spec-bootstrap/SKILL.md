@@ -1,11 +1,11 @@
 ---
-name: trellis-spec-bootstrap
+name: sun-trellis-spec-bootstrap
 description: "初始化或扩展项目工程规范（Spec）：分析代码仓库架构，按包与分层组织规范，并规划任务；也支持把已有 Docs/ADR/Domain/Quality 体系迁移接入 Trellis。适用于新项目、尚无 Trellis spec 的既有项目，或需要配置 `.trellis/doc.json` 的项目。"
 ---
 
-# trellis-spec-bootstrap
+# sun-trellis-spec-bootstrap
 
-使用本技能在项目中搭建或扩充项目规范体系，为工作流中的 `trellis-before-dev`、`trellis-check` 和 `trellis-update-spec` 提供权威规则基准。
+使用本技能在项目中搭建或扩充项目规范体系，为工作流中的 `sun-trellis-before-dev`、`sun-trellis-check` 和 `sun-trellis-update-spec` 提供权威规则基准。
 
 ## 分支选择
 
@@ -29,7 +29,7 @@ description: "初始化或扩展项目工程规范（Spec）：分析代码仓�
 这里要区分两种写法：`$root/guides/index.md` 是 **Skill 查找文档时的路径模板**，默认 root 下解析为 `.trellis/spec/guides/index.md`；而 `files` 中必须写实际的完整项目相对路径，不能写 `$root/...`。
 
 - `files` 是运行时注入白名单：每项为项目根相对的 Markdown 完整路径，支持多个，按配置顺序展示并去重。只注入文件，不注入目录或正文。
-- `root` 是 Skill 元数据：默认 `.trellis/spec`，供本技能和 `trellis-update-spec` 作为文档发现与沉淀的默认根目录；root 不拼接、不限制 files，也不改变运行时注入。
+- `root` 是 Skill 元数据：默认 `.trellis/spec`，供本技能和 `sun-trellis-update-spec` 作为文档发现与沉淀的默认根目录；root 不拼接、不限制 files，也不改变运行时注入。
 - 未配置 `.trellis/doc.json` 时按默认 root 扫描；显式配置后未列入 files 的旧 Spec 不再作为注入依据。
 - 显式配置无效时不会静默回退旧 Spec，而是提示修复。新增需要注入的文档时，必须同步加入 files。
 

@@ -8,7 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const read = (rel) => readFileSync(path.join(repoRoot, rel), 'utf8')
 
 test('bootstrap contract covers migration, initialization, root metadata and files whitelist', () => {
-  const text = read('skills/trellis-spec-bootstrap/SKILL.md')
+  const text = read('skills/sun-trellis-spec-bootstrap/SKILL.md')
   assert.match(text, /迁移分支/)
   assert.match(text, /初始化分支/)
   assert.match(text, /\.trellis\/doc\.json/)
@@ -19,7 +19,7 @@ test('bootstrap contract covers migration, initialization, root metadata and fil
 })
 
 test('development and verification consumers read the configured files whitelist', () => {
-  for (const rel of ['skills/trellis-before-dev/SKILL.md', 'skills/trellis-check/SKILL.md']) {
+  for (const rel of ['skills/sun-trellis-before-dev/SKILL.md', 'skills/sun-trellis-check/SKILL.md']) {
     const text = read(rel)
     assert.match(text, /\.trellis\/doc\.json/, rel)
     assert.match(text, /files/, rel)
@@ -28,7 +28,7 @@ test('development and verification consumers read the configured files whitelist
 })
 
 test('update-spec routes to configured docs and requires files maintenance for new injected docs', () => {
-  const text = read('skills/trellis-update-spec/SKILL.md')
+  const text = read('skills/sun-trellis-update-spec/SKILL.md')
   assert.match(text, /优先更新已有权威文档/)
   assert.match(text, /新增需要注入的文档必须同步 files/)
   assert.match(text, /归属不明就问/)
@@ -37,8 +37,8 @@ test('update-spec routes to configured docs and requires files maintenance for n
 
 test('workflow skills and templates no longer present the legacy directory as the only quality gate', () => {
   const files = [
-    'skills/trellis-feat/SKILL.md',
-    'skills/trellis-refactor/SKILL.md',
+    'skills/sun-trellis-feat/SKILL.md',
+    'skills/sun-trellis-refactor/SKILL.md',
     'skills/_templates/feat/design.md',
     'skills/_templates/feat/review.md',
     'skills/_templates/issue/fix-note.md',
@@ -55,10 +55,10 @@ test('workflow skills and templates no longer present the legacy directory as th
 })
 test('skill path templates use $root instead of a hardcoded spec package root', () => {
   const files = [
-    'skills/trellis-spec-bootstrap/SKILL.md',
-    'skills/trellis-update-spec/SKILL.md',
-    'skills/trellis-before-dev/SKILL.md',
-    'skills/trellis-check/SKILL.md',
+    'skills/sun-trellis-spec-bootstrap/SKILL.md',
+    'skills/sun-trellis-update-spec/SKILL.md',
+    'skills/sun-trellis-before-dev/SKILL.md',
+    'skills/sun-trellis-check/SKILL.md',
   ]
   for (const rel of files) {
     const text = read(rel)
@@ -68,11 +68,11 @@ test('skill path templates use $root instead of a hardcoded spec package root', 
 })
 test('consumer skills do not retain a second hardcoded spec root', () => {
   const files = [
-    'skills/trellis-update-spec/SKILL.md',
-    'skills/trellis-before-dev/SKILL.md',
-    'skills/trellis-check/SKILL.md',
-    'skills/trellis-feat/SKILL.md',
-    'skills/trellis-refactor/SKILL.md',
+    'skills/sun-trellis-update-spec/SKILL.md',
+    'skills/sun-trellis-before-dev/SKILL.md',
+    'skills/sun-trellis-check/SKILL.md',
+    'skills/sun-trellis-feat/SKILL.md',
+    'skills/sun-trellis-refactor/SKILL.md',
     'skills/_templates/work-types.md',
     'skills/_templates/feat/review.md',
   ]
@@ -82,10 +82,10 @@ test('consumer skills do not retain a second hardcoded spec root', () => {
 })
 test('spec skills carry a complete and valid doc.json context', () => {
   for (const rel of [
-    'skills/trellis-spec-bootstrap/SKILL.md',
-    'skills/trellis-before-dev/SKILL.md',
-    'skills/trellis-check/SKILL.md',
-    'skills/trellis-update-spec/SKILL.md',
+    'skills/sun-trellis-spec-bootstrap/SKILL.md',
+    'skills/sun-trellis-before-dev/SKILL.md',
+    'skills/sun-trellis-check/SKILL.md',
+    'skills/sun-trellis-update-spec/SKILL.md',
   ]) {
     const text = read(rel)
     assert.match(text, /\.trellis\/doc\.json/, rel)
@@ -94,13 +94,13 @@ test('spec skills carry a complete and valid doc.json context', () => {
     assert.match(text, /完整.*路径/, rel)
   }
 
-  const before = read('skills/trellis-before-dev/SKILL.md')
+  const before = read('skills/sun-trellis-before-dev/SKILL.md')
   assert.match(before, /读取顺序/)
-  const update = read('skills/trellis-update-spec/SKILL.md')
+  const update = read('skills/sun-trellis-update-spec/SKILL.md')
   assert.match(update, /读取与写入顺序/)
   assert.match(update, /docs\/guides\/index\.md/)
 
-  const bootstrap = read('skills/trellis-spec-bootstrap/SKILL.md')
+  const bootstrap = read('skills/sun-trellis-spec-bootstrap/SKILL.md')
   assert.doesNotMatch(bootstrap, /"files"\s*:\s*\[\s*"\$root\//)
   assert.ok(!bootstrap.includes('$root/`n'), 'directory tree must not contain a literal `n')
 })

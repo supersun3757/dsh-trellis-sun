@@ -1,6 +1,6 @@
 # Changelog
 
-dsh-trellis 各版本发布日志汇总，同时作为后续 Release Notes 的**格式模板**。
+dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana-peeljj12/dsh-trellis` 的历史），同时作为后续 Release Notes 的**格式模板**。
 
 ## 格式约定（Release Notes 模板）
 
@@ -9,6 +9,46 @@ dsh-trellis 各版本发布日志汇总，同时作为后续 Release Notes 的**
 - **条目**：`- **要点**：说明`——要点加粗，说明陈述变更价值、影响范围与关键行为。
 - **代码标识**：工具名 / 函数名 / 路径等用反引号包裹。
 - **同步**：tag 推送后 GitHub Release 的 body 由管道自动提取本文件对应条目（`scripts/extract-changelog.mjs <tag>`，见 `.github/workflows/release.yml`）；未找到条目时回退到 GitHub 自动生成。每个版本发布前，先在文件头部新增 `## <tag> — <日期>` 条目。
+
+---
+
+## Unreleased — sun-Trellis fork
+
+分叉基线：上游 `@banana-peeljj12/dsh-trellis` v0.5.1。下列条目属于本分支，与上游版本号无关；详细差异见 [FORK.md](./FORK.md)。
+
+## 兼容性
+
+- **对接 DSH 0.2.2-rc.5 / Cordis 4.1.0**：`devDependencies` 全部抬到 0.2.2-rc.5、Cordis 显式钉 4.1.0；`peerDependencies` 由隐式基线改为显式 `>=0.2.2-rc.5 <0.3.0-0`；新增上游缺失的 `engines.dsh` 与 `engines.node >=20`。
+- **修复 Cordis 4.1.0 的 `waterfall` 尾参语义变更**：4.1.0 起 fallback 被裸调用、不再收到 dispatch 参数，`test/doc-config-route.test.js` 中 6 处 `(base) => base` 恒返回 `undefined`，改为 `() => ({ tools: [], sections: [] })`。生产代码不受影响。
+
+## 功能
+
+- **身份改造**：包名改为 `dsh-trellis-sun`；15 个内置技能改为 `sun-trellis-*`，7 个内置工具改为 `sun_trellis_*`，CLI 改为 `sun-trellis-install`。
+- **技能前缀不是纯命名问题**：`ensureProjectSkills` 在版本变化时会覆盖它负责的技能目录，上游的 `trellis-*` 命名会把项目里已有的 Trellis 技能替换掉；改前缀后两套技能可并存。
+
+## 文档
+
+- **新增 `FORK.md`**：逐项记录与上游的差异、刻意不改的部分，以及"不做子智能体机制 / 不做 `trellis_wait`"的范围边界。
+
+---
+
+## Unreleased — sun-Trellis fork (English)
+
+Fork baseline: upstream `@banana-peeljj12/dsh-trellis` v0.5.1. The entries below belong to this branch and are independent of the upstream version numbering; see [FORK.md](./FORK.md) for the full divergence list.
+
+## Compatibility
+
+- **Aligned with DSH 0.2.2-rc.5 / Cordis 4.1.0**: every `devDependencies` entry is raised to 0.2.2-rc.5 and Cordis is pinned explicitly at 4.1.0; `peerDependencies` move from an implicit baseline to an explicit `>=0.2.2-rc.5 <0.3.0-0`; the missing `engines.dsh` and `engines.node >=20` fields are added.
+- **Fixed the Cordis 4.1.0 `waterfall` tail-argument change**: from 4.1.0 the fallback is called bare and no longer receives the dispatch argument, so the six `(base) => base` fixtures in `test/doc-config-route.test.js` always returned `undefined`; they now return `() => ({ tools: [], sections: [] })`. Production code is unaffected.
+
+## Features
+
+- **Identity change**: the package is now `dsh-trellis-sun`; the 15 bundled skills become `sun-trellis-*`, the 7 bundled tools `sun_trellis_*`, and the CLI `sun-trellis-install`.
+- **The skill prefix is not cosmetic**: `ensureProjectSkills` overwrites the skill directories it owns whenever the version changes, so the upstream `trellis-*` names would have replaced a project's real Trellis skills. With the new prefix both sets coexist.
+
+## Docs
+
+- **Added `FORK.md`**: a per-item record of the divergence from upstream, what is deliberately left untouched, and the scope boundary of "no sub-agent mechanism / no `trellis_wait`".
 
 ---
 

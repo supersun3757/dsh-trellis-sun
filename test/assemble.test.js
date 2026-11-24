@@ -73,7 +73,7 @@ async function mountAssembler({ cwd, allowlist = [cwd], config = {} }) {
   await new Promise((resolve) => setTimeout(resolve, 250))
 
   const base = {
-    tools: [{ name: 'read' }, { name: 'write' }, { name: 'trellis_artifact_update' }],
+    tools: [{ name: 'read' }, { name: 'write' }, { name: 'sun_trellis_artifact_update' }],
     sections: [{ name: 'persona', text: 'you are helpful' }],
   }
   // cordis' waterfall takes the innermost `next` as its LAST argument
@@ -132,7 +132,7 @@ test('assemble injects nothing extra when the project has no .trellis/spec', asy
     assert.deepEqual(out.tools, [
       { name: 'read' },
       { name: 'write' },
-      { name: 'trellis_artifact_update' },
+      { name: 'sun_trellis_artifact_update' },
     ])
   } finally {
     rmSync(root, { recursive: true, force: true })
@@ -154,7 +154,7 @@ test('assemble ignores projects outside the allowlist', async () => {
     assert.deepEqual(out.tools, [
       { name: 'read' },
       { name: 'write' },
-      { name: 'trellis_artifact_update' },
+      { name: 'sun_trellis_artifact_update' },
     ])
   } finally {
     rmSync(root, { recursive: true, force: true })

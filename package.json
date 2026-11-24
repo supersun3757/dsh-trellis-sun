@@ -1,5 +1,5 @@
 {
-  "name": "@banana-peeljj12/dsh-trellis",
+  "name": "dsh-trellis-sun",
   "version": "0.5.1",
   "description": "Self-contained Trellis workflow trigger for DeepSeek Harness: per-turn breadcrumb injection via agent/pre-step, a bundled skill provider, and DSH-native task/phase state resolution. No Trellis AGPL code is vendored; workflow semantics are rewritten and licensed MIT.",
   "type": "module",
@@ -24,7 +24,7 @@
     }
   },
   "bin": {
-    "trellis-install": "./scripts/install.mjs"
+    "sun-trellis-install": "./scripts/install.mjs"
   },
   "scripts": {
     "test": "node --test",
@@ -48,7 +48,8 @@
     "icon.svg",
     "docs/images/architecture.drawio.png",
     "cordis.patch.yml",
-    "README_EN.md"
+    "README_EN.md",
+    "FORK.md"
   ],
   "license": "MIT",
   "publishConfig": {
@@ -56,7 +57,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/1264459640/dsh-trellis.git"
+    "url": "git+https://github.com/supersun3757/dsh-trellis-sun.git"
   },
   "engines": {
     "node": ">=20",

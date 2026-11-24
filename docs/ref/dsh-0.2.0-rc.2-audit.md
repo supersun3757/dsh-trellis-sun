@@ -1,6 +1,6 @@
 # dsh-trellis 适配审计：DSH 0.1.7-rc.1 → 0.2.0-rc.2
 
-**对象**：`@banana-peeljj12/dsh-trellis`（本仓库）
+**对象**：`dsh-trellis-sun`（本仓库）
 **目标运行时**：`@deepseek-ai/dsh-*@0.2.0-rc.2` / `@deepseek-ai/dsh-desktop-runtime@0.2.0-rc.2`（DeepSeek Harness 桌面版 44.0.0，Electron）
 **原目标运行时**：`@deepseek-ai/dsh-*@0.1.7-rc.1`
 **结论**：**代码零改动；本次适配的承重改动是 DSH peer 范围声明。**
@@ -117,7 +117,7 @@ v0.3.5 记录过两个 id 体系：席位 key 用 patch 的**裸 id**，而配�
 用真实 `0.2.0-rc.2` + `cordis 4.0.4`、裸 `Context` 与 stub 服务挂载 `lib/index.js`：
 
 - 插件正常挂载，无激活错误；`mounted; allowlist=[...]` 正常打印。
-- 7 个工具全部注册：`trellis_state`、`trellis_task_create`、`trellis_task_skip`、`trellis_task_update`、`trellis_task_archive`、`trellis_artifact_update`、`trellis_ui_update`。
+- 7 个工具全部注册：`sun_trellis_state`、`sun_trellis_task_create`、`sun_trellis_task_skip`、`sun_trellis_task_update`、`sun_trellis_task_archive`、`sun_trellis_artifact_update`、`sun_trellis_ui_update`。
 - `webServer.register` 被调用（`prefix:/trellis-workflow/api`）。
 - `agent/pre-step` 瀑布实跑：**breadcrumb 真的注入了**（消息数 1 → 2，`user` 角色，内容以 `[trellis/no_task] Workflow state (...)` 开头），`decision.messages.toSpliced` 插入路径可用。
 - 置 `fs.sandboxMode = 'workspace-write'` 后：`policy.resolve` 收到的参数恰为 `{ session }`，解析结果作为 `writeText` 第 5 参透传（实测 26 次调用来自技能置备）⇒ `ctx.get('sandboxPolicy') → resolve({session}) → writeText` 全链路打通。
@@ -134,7 +134,7 @@ v0.3.5 记录过两个 id 体系：席位 key 用 patch 的**裸 id**，而配�
 |---|---|
 | 兼容性声明是决定性变量 | 同一真实 CLI、同一命令，仅 peer 范围不同：`^0.2.0-rc.2` 通过（exit 0），`^0.1.7-rc.1` 被拒（`installation rejected` + `nothing was installed`） |
 | 插件在真实 host 中加载 | 无 activation 错误；6 个 `trellis_*` 工具注册；`apply()` 执行到末句 |
-| `trellis_state` 真实代码路径 | fixture 返回 `matched=true / phase=planning / activeTask=.trellis/tasks/feat-01-15-demo / slugValid=true`；allowlist 外返回 `source=outside-allowlist` |
+| `sun_trellis_state` 真实代码路径 | fixture 返回 `matched=true / phase=planning / activeTask=.trellis/tasks/feat-01-15-demo / slugValid=true`；allowlist 外返回 `source=outside-allowlist` |
 | **`enforceReadonlyPlanning` 工具面裁剪**（审计中最薄的环节） | 在**真实 undecided / planning / authorized / skipped** 相位下实测：`write`/`edit` 与对应 trellis 工具被裁、其它插件工具（`web_search`、`read`）保留、只读提示段按相位增删、breadcrumb 每相位恰好 1 条 —— 21/21 PASS |
 | 配置表单与 volatile 字段 | `describe()` 收录该条目（`applies: "live"`），4 个 schema 默认值全部行为化验证（`injectStep=1` 只注入第 1 步、`inline=false` → `planning`、`skipKeywords` 按词匹配等） |
 | 写路径 | `ctx.fs.writeText`（5 参含 sandboxPolicy）往返成功；`task_create → task_update → artifact_update → git 门禁 → completed → archive → task_skip` 端到端全部可用 |

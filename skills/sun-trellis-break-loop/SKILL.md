@@ -1,9 +1,9 @@
 ---
-name: trellis-break-loop
+name: sun-trellis-break-loop
 description: "打破反复调试死循环与测试水泥效应：当同一个问题改了两次以上、测试跑绿了但逻辑依然错误、怀疑设计有缺陷、或修了 A 坏了 B 时使用。深入推翻旧的错误设计，而不是继续打补丁。"
 ---
 
-# trellis-break-loop
+# sun-trellis-break-loop
 
 当调试陷入反复拉锯时使用本技能——例如：
 1. 同一问题被修复了两次以上仍复发；
@@ -33,7 +33,7 @@ description: "打破反复调试死循环与测试水泥效应：当同一个问
 ## 产物与沉淀
 
 - 将复盘分析、失效机制与长效方案持久化记录到任务目录下的 `analysis.md` 或 `research/` 资料中。
-- 在任务收尾时，通过 `trellis-update-spec` 将本次教训转化为工程规范，确保团队与 Agent 不再踩坑。
+- 在任务收尾时，通过 `sun-trellis-update-spec` 将本次教训转化为工程规范，确保团队与 Agent 不再踩坑。
 
 ## 硬性卡点
 

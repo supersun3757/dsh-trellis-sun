@@ -71,7 +71,7 @@ test('the schema is exposed at runtime.Config, which dsh-settings reads', async 
 test('host plugin mounts on a real cordis context and registers its tools', async () => {
   const { registered } = await mountPlugin()
   assert.ok(registered.length > 0, 'no tools were registered — apply likely threw')
-  for (const name of ['trellis_state', 'trellis_task_create', 'trellis_task_update', 'trellis_task_archive']) {
+  for (const name of ['sun_trellis_state', 'sun_trellis_task_create', 'sun_trellis_task_update', 'sun_trellis_task_archive']) {
     assert.ok(registered.includes(name), `missing tool ${name} (registered: ${registered.join(', ')})`)
   }
 })
@@ -112,8 +112,8 @@ test('the mounted plugin exposes a working effective config', async () => {
   root.plugin(plugin, { allowlist: ['F:/proj'] })
   await new Promise((resolve) => setTimeout(resolve, 250))
 
-  const stateTool = tools.get('trellis_state')
-  assert.ok(stateTool, 'trellis_state was not registered')
+  const stateTool = tools.get('sun_trellis_state')
+  assert.ok(stateTool, 'sun_trellis_state was not registered')
 
   const value = await stateTool.execute(
     { cwd: 'F:/proj/sub' },

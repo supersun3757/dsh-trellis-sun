@@ -27,7 +27,7 @@
      （`[trellis/steps_unverified]`，含 `'human'` 未确认）均拒绝；
    - 布尔字段必须严格类型校验（`typeof === 'boolean'`），`Boolean()` 会把字符串 `"false"`
      强制转成 `true`，是历史旁路点。
-3. **产物写入走专属受控工具 `trellis_artifact_update`**：
+3. **产物写入走专属受控工具 `sun_trellis_artifact_update`**：
    - 只允许写入当前任务目录 `.trellis/tasks/<slug>/` 下的标准交付文档（全工种白名单，见
      `lib/artifact.js` `ALLOWED_ARTIFACTS`），禁止触碰项目源码；
    - **白名单保留已废弃模板名（兼容历史任务）**：`implement.md` / `checklist.yaml` 虽已从模板体系
@@ -42,19 +42,19 @@
      issue report/analyze；refactor scan/design；in_progress ↔ feat impl/review/check；issue fix/fix-note；
      refactor apply。`completed` 状态恒胜（展示终态）。未知/遗留 stage 回退到基于 status 的粗粒度相位。
    - 三态授权（`lib/readonly.js` `authorizationOf`）：`undecided`（无任务且未跳过）→
-     仅裁剪 `write`/`edit` + 任务写工具（`trellis_task_update` / `trellis_artifact_update` /
-     `trellis_task_archive` / `trellis_ui_update`），`trellis_state` / `trellis_task_create` /
-     `trellis_task_skip` 与其余工具（含其他插件工具）保留；`planning`（规划型阶段）→
-     仅裁剪 `write`/`edit` + 任务生命周期工具（`trellis_task_create` / `trellis_task_skip` /
-     `trellis_task_archive` / `trellis_ui_update`），`trellis_state` / `trellis_task_update` /
-     `trellis_artifact_update` 与其余工具保留；`authorized`（写码阶段 / completed / 已跳过）→
+     仅裁剪 `write`/`edit` + 任务写工具（`sun_trellis_task_update` / `sun_trellis_artifact_update` /
+     `sun_trellis_task_archive` / `sun_trellis_ui_update`），`sun_trellis_state` / `sun_trellis_task_create` /
+     `sun_trellis_task_skip` 与其余工具（含其他插件工具）保留；`planning`（规划型阶段）→
+     仅裁剪 `write`/`edit` + 任务生命周期工具（`sun_trellis_task_create` / `sun_trellis_task_skip` /
+     `sun_trellis_task_archive` / `sun_trellis_ui_update`），`sun_trellis_state` / `sun_trellis_task_update` /
+     `sun_trellis_artifact_update` 与其余工具保留；`authorized`（写码阶段 / completed / 已跳过）→
      完整工具面（不裁剪）。裁剪是 **denylist**（只移除指定工具），不是 allowlist——
      其他插件注册的工具（web_search、generate_image、subagent、skill 等）绝不能被连带裁剪
      （issue-09-07-trim-tools-denylist）。经 `system-prompt/assemble` 按会话 cwd 命中 allowlist
      后物理裁剪工具 Schema。
-   - **写路径必须拒绝状态漂移**：`trellis_task_create` / `trellis_task_update` 校验合并后的
+   - **写路径必须拒绝状态漂移**：`sun_trellis_task_create` / `sun_trellis_task_update` 校验合并后的
      status↔stage，拒绝「规划型阶段 + `status=in_progress`」（`lib/task.js`），保证只读窗口不被
-     模型纪律失误打开；`write`/`edit` 从规划期工具面剔除，但 `trellis_artifact_update` 必须保留
+     模型纪律失误打开；`write`/`edit` 从规划期工具面剔除，但 `sun_trellis_artifact_update` 必须保留
      为唯一写通道，否则规划期"想写方案却无工具"会死锁。
    - **只读语义双通道：工具面裁剪 + 显式指令文本注入**（feat-09-07-inject-readonly-prompt）：
      除了 denylist 裁剪，`system-prompt/assemble` 处理器在 `undecided`/`planning` 时还会向
@@ -135,7 +135,7 @@
   `exec.agent.session.id`，底层任务函数常用 `exec.sessionId`。产物默认目标解析必须兼容宿主形态，
   否则会把“有当前会话”误当作“无会话”，回退 canonical 指针并覆盖旧任务。回归测试应通过真实
   注册工具调用，构造 canonical 旧任务与当前会话新任务并存，断言返回 slug、实际文件及绑定均正确。
-- `trellis_artifact_update` 的默认 slug 跟随**会话绑定任务**，不一定是本次正在推进的任务
+- `sun_trellis_artifact_update` 的默认 slug 跟随**会话绑定任务**，不一定是本次正在推进的任务
   （证据：feat-09-07 曾把 design.md 误写入绑定任务 trellis-right-phase-panel，靠 `git checkout`
   还原）。写产物时若会话绑定任务 ≠ 目标任务，必须显式传 `slug`，否则会污染其他任务目录。
 
@@ -153,9 +153,9 @@
    （`DOC_CONFIG_ERROR_INSTRUCTION`），不抛错中断 assembly。
 3. **`root` 只是 Skill 元数据**：默认 `.trellis/spec`，供 bootstrap/update-spec 做文档发现
    与沉淀；不得用它拼接或过滤 files，也不得让它改变运行时注入结果。
-4. **bootstrap 分支**：`trellis-spec-bootstrap` 的迁移分支只写 `.trellis/doc.json`，不改业务
+4. **bootstrap 分支**：`sun-trellis-spec-bootstrap` 的迁移分支只写 `.trellis/doc.json`，不改业务
    Docs；初始化分支保留最小 Spec 骨架，并把实际创建、需注入的文件写入 files。
-5. **files 必须随新增规范同步维护**：`trellis-update-spec` 新建需长期注入的文档时，必须把
+5. **files 必须随新增规范同步维护**：`sun-trellis-update-spec` 新建需长期注入的文档时，必须把
    完整相对路径加入 files；只更新已有文件正文无需改配置。归属不明时询问用户，禁止静默
    写回旧 Spec。
 6. **不要回退为目录扫描**：自定义 files 只支持明确文件，不新增 root 递归扫描、多 root 或

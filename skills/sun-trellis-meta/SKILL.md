@@ -1,9 +1,9 @@
 ---
-name: trellis-meta
+name: sun-trellis-meta
 description: "定制 Trellis 工作流自身：修改 workflow.md 面包屑提示、增加自定义状态、挂载生命周期勾子或调整技能与代理配置。当用户需要改变工作流运作机制时使用。"
 ---
 
-# trellis-meta
+# sun-trellis-meta
 
 使用本技能直接对 Trellis 工作流机制本身进行定制或扩展（而非在工作流内执行具体业务任务）。
 

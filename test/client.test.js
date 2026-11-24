@@ -81,7 +81,7 @@ test('settings card lives on the Plugins page and browses via uiWorkspace (0.1.7
   // The package-name literal must be the single source for the seat key: a
   // drifted copy fails silently in the plugin manager (nothing renders, no
   // error).
-  assert.match(source, /const PKG = '@banana-peeljj12\/dsh-trellis'/)
+  assert.match(source, /const PKG = 'dsh-trellis-sun'/)
   assert.match(source, /const BUNDLE_CONFIG_KEY = PKG/)
   assert.doesNotMatch(source, /settings\.plugins\.tab/)
   assert.doesNotMatch(source, /settingsScope/)
@@ -238,7 +238,7 @@ test('config form takes exactly ONE seat — the bundle page (outer) — off one
   // (`renderSlot(..., { entryKey: pkg.name })`, `ledger.bundles.has(pkg.name)`).
   // A `#` on the bundle key silently renders nothing, so the exact string is
   // asserted, not a regex shape.
-  assert.equal(outer.options.key, '@banana-peeljj12/dsh-trellis')
+  assert.equal(outer.options.key, 'dsh-trellis-sun')
 
   // The injected face is the read/write channel: dropping a seat must not drop
   // any of the actions, or saving would silently stop working.

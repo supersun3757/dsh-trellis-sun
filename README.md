@@ -1,4 +1,4 @@
-# dsh-trellis
+# dsh-trellis-sun
 
 <div align="center">
   <b style="font-size: 1.3em;">Trellis 工作流扩展 · DeepSeek Harness</b><br />
@@ -15,16 +15,18 @@
 
 ---
 
+> **sun-Trellis 分支** — 本仓库 fork 自上游 `@banana-peeljj12/dsh-trellis` v0.5.1，主线跟随 DSH 0.2.2-rc.5 / Cordis 4.1.0。包名改为 `dsh-trellis-sun`，内置技能统一为 `sun-trellis-*`、内置工具统一为 `sun_trellis_*`，可与项目中已有的 Trellis 技能并存而不互相覆盖。与上游的差异清单见 [FORK.md](./FORK.md)。
+
 ## 项目简介
 
-`dsh-trellis` 是为 [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) 开发的工程化工作流插件，借鉴了 [Trellis](https://github.com/mindfold-ai/trellis) 的阶段规范与状态机设计思想。
+`dsh-trellis-sun` 是为 [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) 开发的工程化工作流插件，借鉴了 [Trellis](https://github.com/mindfold-ai/trellis) 的阶段规范与状态机设计思想。
 
 在大模型长程编程任务中，常见以下协作问题：
 1. **未理清方案便直接修改代码**：容易引入方向性错误或破坏现有架构；
 2. **任务待办散落各处**：需求文档、草稿文件与上下文记录多处待办，状态脱节；
 3. **缺乏验收约束**：代码编写完成后直接标记完成，缺少自测验证或人工审核卡点。
 
-`dsh-trellis` 通过统一的步骤状态机、任务阶段流转和运行时工具过滤，帮助大模型在复杂任务中遵循“先方案后编码、验证后再完结”的工程规范。
+`dsh-trellis-sun` 通过统一的步骤状态机、任务阶段流转和运行时工具过滤，帮助大模型在复杂任务中遵循“先方案后编码、验证后再完结”的工程规范。
 
 ---
 
@@ -36,7 +38,7 @@
 - **可选规划期只读保护**：开启配置项后，可在方案获批前于运行时过滤掉代码写工具（`write` / `edit`），仅开放文档受控修改通道，确保方案敲定后再动代码。
 - **会话级状态隔离**：各会话的任务绑定关系独立存储在 `.trellis/.runtime/sessions/` 中，多会话与并发子代理并行工作时互不串扰。
 - **双模态任务看板（视觉语言 v2）**：常态为极简紧凑弹窗（当前绑定任务置顶为焦点卡片，内置高亮步骤清单与折叠态；下方按状态分组列出任务流），可一键展开为全屏大看板（按「进行中 / 规划中 / 已完成」分组表格，支持 `⌘K` 实时搜索与工作流类型筛选）；右侧详情面板内置 **Step Tracker 步骤流水线**、阶段轨道节点与产物文件列表。看板遵循**单强调色设计**与**克制交互**——不直接改任务状态，仅提供「▶ 推进任务」将指令安全填入输入框交由 Agent 执行，产物点击生成 `@.trellis/tasks/...` 原生文件引用交给 DSH 原生查看。
-- **Git 干净度校验（支持局部校验）**：任务完成和归档时自动检查 Git 工作区状态，防止遗留未提交的脏代码。若工作区存在与任务无关的未提交改动，可在 `trellis_task_update` / `trellis_task_archive` 中通过 `modified_files` 声明任务实际改动文件，校验将限缩到清单内文件（须已提交），清单外未提交改动仅告警、不再阻塞；未传该参数时保持全局严格校验。
+- **Git 干净度校验（支持局部校验）**：任务完成和归档时自动检查 Git 工作区状态，防止遗留未提交的脏代码。若工作区存在与任务无关的未提交改动，可在 `sun_trellis_task_update` / `sun_trellis_task_archive` 中通过 `modified_files` 声明任务实际改动文件，校验将限缩到清单内文件（须已提交），清单外未提交改动仅告警、不再阻塞；未传该参数时保持全局严格校验。
 
 ---
 
@@ -47,7 +49,7 @@
 确保环境 Node.js ≥ 20，在终端运行：
 
 ```sh
-dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
+dsh plugin --profile web add dsh-trellis-sun@latest
 ```
 
 安装完成后**重启 DSH 服务**。
@@ -57,7 +59,7 @@ dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
 > `desktop` profile（该名字被硬编码保护）。请改用桌面版自带的 CLI：
 >
 > ```sh
-> & "F:\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add link:F:\dsh-plugins\dsh-trellis
+> & "F:\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add link:F:\dsh-plugins\dsh-trellis-sun
 > ```
 >
 > 装的若是本地开发目录，用 `link:<仓库绝对路径>`；装完成后**完整退出并重启桌面版**
@@ -75,7 +77,7 @@ dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
 
 为避免非预期介入，插件默认不会拦截未授权的目录。请在 Web 端或配置文件中添加生效路径：
 
-1. 打开 DSH Web 客户端，点击左侧边栏的 **「插件」** 图标，在 **「已安装」** 分区点击 **@banana-peeljj12/dsh-trellis** 进入详情页（配置表单直接位于详情页最外层，无需再展开「包含的组件」）；
+1. 打开 DSH Web 客户端，点击左侧边栏的 **「插件」** 图标，在 **「已安装」** 分区点击 **dsh-trellis-sun** 进入详情页（配置表单直接位于详情页最外层，无需再展开「包含的组件」）；
 2. 在 **白名单项目 (allowlist)** 中添加需要启用该工作流的项目根目录绝对路径——既可手动输入，
    也可点击 **浏览…** 按钮弹出系统文件夹选择器直接选取，保存后即时生效。
 
@@ -118,7 +120,7 @@ dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
 - `completed`：验证通过后完结。
 
 #### 验证模式说明：
-- **自动化验证 (`verification: 'ai'`)**：模型编写代码后，必须先运行测试并调用 `trellis_task_update` 填入 `verified: true` 与 `verificationNotes` 测试记录，随后才允许将状态更新为 `completed`，防止单次调用跳过测试。
+- **自动化验证 (`verification: 'ai'`)**：模型编写代码后，必须先运行测试并调用 `sun_trellis_task_update` 填入 `verified: true` 与 `verificationNotes` 测试记录，随后才允许将状态更新为 `completed`，防止单次调用跳过测试。
 - **人工验收卡点 (`verification: 'human'`)**：用于涉及核心契约或高风险操作的步骤。只有在用户明确同意且记录 `verifiedBy: 'human'` 后，该步骤才被允许标记为 `completed`。
 - **任务完结审计**：当任务标记为完成或发起归档时，系统会校验所有步骤是否均已完成并通过验证，同时校验 Git 工作区是否干净。
 
@@ -152,11 +154,11 @@ dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
 
 | 授权状态 | 触发条件 | 被裁剪的工具 | 说明 |
 |---|---|---|---|
-| `undecided` | 项目在白名单内、无活跃任务且未声明跳过 | `write` / `edit` + `trellis_task_update` / `trellis_artifact_update` / `trellis_task_archive` / `trellis_ui_update` | 移除代码写工具与任务写工具，避免盲目直接改写源码；`trellis_task_create` / `trellis_task_skip` 与所有其他工具（含其他插件工具）保留 |
-| `planning` | 任务处于规划类阶段（`prd`, `design`, `scan`, `report` 等） | `write` / `edit` + `trellis_task_create` / `trellis_task_skip` / `trellis_task_archive` / `trellis_ui_update` | 移除通用 `write` / `edit` 工具与任务生命周期工具，仅放行受控的任务产物更新；`trellis_task_update` / `trellis_artifact_update` 与所有其他工具保留 |
+| `undecided` | 项目在白名单内、无活跃任务且未声明跳过 | `write` / `edit` + `sun_trellis_task_update` / `sun_trellis_artifact_update` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | 移除代码写工具与任务写工具，避免盲目直接改写源码；`sun_trellis_task_create` / `sun_trellis_task_skip` 与所有其他工具（含其他插件工具）保留 |
+| `planning` | 任务处于规划类阶段（`prd`, `design`, `scan`, `report` 等） | `write` / `edit` + `sun_trellis_task_create` / `sun_trellis_task_skip` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | 移除通用 `write` / `edit` 工具与任务生命周期工具，仅放行受控的任务产物更新；`sun_trellis_task_update` / `sun_trellis_artifact_update` 与所有其他工具保留 |
 | `authorized` | 任务进入实施阶段（`impl`, `fix`, `apply`）或用户已跳过 | 无（不裁剪） | 允许根据设计方案修改项目源码 |
 
-> 注：`trellis_artifact_update` 仅允许写入当前任务目录（`.trellis/tasks/<slug>/`）内的白名单文档，杜绝跨目录修改。
+> 注：`sun_trellis_artifact_update` 仅允许写入当前任务目录（`.trellis/tasks/<slug>/`）内的白名单文档，杜绝跨目录修改。
 
 ---
 
@@ -164,19 +166,19 @@ dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
 
 插件向运行时注册了以下专用工具：
 
-- **`trellis_task_create`**：创建新的工作流任务，生成初始 `task.json` 与阶段交付物模板，并自动绑定当前会话。
-- **`trellis_task_update`**：推进任务阶段、更新步骤进度、记录验证证据或更新任务信息，不改变当前会话绑定。显式传入 `slug` 只选择更新目标；切换任务请使用看板的激活按钮。
-- **`trellis_artifact_update`**：安全更新任务交付文档（如 `prd.md`, `design.md`, `check.md` 等），受白名单和路径校验约束。
-- **`trellis_task_archive`**：将已完成的任务归档至 `.trellis/tasks/archive/YYYY-MM/` 目录下，并解除当前会话绑定。
-- **`trellis_task_skip`**：经用户同意后，在当前会话跳过 Trellis 工作流约束，直接放行全量工具权限。
-- **`trellis_state`**：诊断并返回当前项目的 Trellis 运行时状态与任务信息。
-- **`trellis_ui_update`**：主动刷新 Web 界面顶部的阶段徽章状态。
+- **`sun_trellis_task_create`**：创建新的工作流任务，生成初始 `task.json` 与阶段交付物模板，并自动绑定当前会话。
+- **`sun_trellis_task_update`**：推进任务阶段、更新步骤进度、记录验证证据或更新任务信息，不改变当前会话绑定。显式传入 `slug` 只选择更新目标；切换任务请使用看板的激活按钮。
+- **`sun_trellis_artifact_update`**：安全更新任务交付文档（如 `prd.md`, `design.md`, `check.md` 等），受白名单和路径校验约束。
+- **`sun_trellis_task_archive`**：将已完成的任务归档至 `.trellis/tasks/archive/YYYY-MM/` 目录下，并解除当前会话绑定。
+- **`sun_trellis_task_skip`**：经用户同意后，在当前会话跳过 Trellis 工作流约束，直接放行全量工具权限。
+- **`sun_trellis_state`**：诊断并返回当前项目的 Trellis 运行时状态与任务信息。
+- **`sun_trellis_ui_update`**：主动刷新 Web 界面顶部的阶段徽章状态。
 
 ---
 
 ## 配置项参考
 
-可在左侧 **「插件」** 页（进入 **@banana-peeljj12/dsh-trellis** 详情页最外层即可见）或 `~/.dsh/settings.yaml` 中进行配置：
+可在左侧 **「插件」** 页（进入 **dsh-trellis-sun** 详情页最外层即可见）或 `~/.dsh/settings.yaml` 中进行配置：
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
@@ -209,10 +211,10 @@ dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
 - `files`：运行时注入白名单。每项必须是项目根相对的 Markdown 完整路径；支持多个文件，按配置顺序注入并去重。**注入的是正文**，不是路径。
 - `budgets`（可选）：本项目自己的注入预算，单位 KB，只写想覆盖的那一项即可。优先级 **`doc.json` 的 `budgets` > 插件设置 `docFileBudgetKB` / `docTotalBudgetKB` > 内置默认 8KB / 32KB**；单文件硬顶 128KB、合计硬顶 512KB，超出的值会被夹紧。写 `0`、负数或非数字视为未设置，自动回退上一级。
 - **注入预算**：单文件与合计各有一档上限（默认 8KB / 32KB，UTF-8 字节）。超出的部分会截断，并标注「已截断 / 超出预算，请 read <路径>」，模型可据此补读；读取失败的文件同样标注路径。提示词头会回显本次真实生效的两个上限。
-- `root`：仅供 `trellis-spec-bootstrap`、`trellis-update-spec` 等 Skill 作为文档发现与沉淀的默认根目录，不拼接或过滤 `files`，也不改变运行时注入结果。
+- `root`：仅供 `sun-trellis-spec-bootstrap`、`sun-trellis-update-spec` 等 Skill 作为文档发现与沉淀的默认根目录，不拼接或过滤 `files`，也不改变运行时注入结果。
 - 未配置 `.trellis/doc.json` 时继续扫描 `.trellis/spec/`（只注入索引，不注入正文）；显式配置后未列入 `files` 的旧 Spec 不再注入。
 - 显式配置无效时不会静默回退旧 Spec，而是注入一条简短修复提示。
-- 新增需长期注入的文档时，必须同步加入 `files`。已有 Docs 的项目可运行 `trellis-spec-bootstrap` 的迁移分支；新项目使用其初始化分支。
+- 新增需长期注入的文档时，必须同步加入 `files`。已有 Docs 的项目可运行 `sun-trellis-spec-bootstrap` 的迁移分支；新项目使用其初始化分支。
 - **可视化配置**：在会话顶部视图栏切到 **「项目文档」**（与「对话 / 轨迹 / Git」同级），即可查看和编辑当前项目的 `.trellis/doc.json`：增删/排序文件、在「注入预算」里直接改本项目的单文件 / 合计上限（留空 = 继承插件设置，非法值就地标红且不能保存）、查看每个文件的注入状态（完整 / 将截断至 生效上限 / 仅保留路径）与预算占用；未配置时可一键载入现有 `.trellis/spec` 索引作为初稿。保存后下一次注入立即生效，无需重启。
 
 ---
@@ -220,7 +222,7 @@ dsh plugin --profile web add @banana-peeljj12/dsh-trellis@latest
 ## 项目结构
 
 ```text
-dsh-trellis/
+dsh-trellis-sun/
 ├── lib/
 │   ├── index.js            # 插件入口：注册 pre-step 钩子、运行时工具过滤与 API 路由
 │   ├── task.js             # 任务执行逻辑：步骤流转、验证门禁检查与状态校验
