@@ -12,6 +12,52 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 
 ---
 
+## v1.1.0 — 2026-11-25
+
+把外部工具的三套机制抄进 skill 文本（spec-delta / code review / 图查询），并补齐它们与既有流程的接缝：行为层进 skill，外部依赖不进包。
+
+## 功能
+
+- **feat 轨道引入 `spec-delta`**：design 阶段与 `design.md` 同批产出 `spec-delta.md`（`ADDED` / `MODIFIED` / `REMOVED`，逐条写明目标文件、章节定位与旧文本），**两者同时 approved 才进 impl**；`sun-trellis-finish-work` 归档前逐条机械合并进常驻 spec——旧文本必须与目标文件逐字一致、锚点必须存在且不重复，否则**停下询问，禁止静默合并**；合并记录写回产物并随业务代码同批提交。与 `sun-trellis-update-spec` 的「实施教训」明确分工：delta 是改动本身的契约增量，lesson 是事后复盘。
+- **check 阶段补齐 code review 机制**：改动集由 `git diff` / `git status` **确定性算出**（不许模型凭印象列文件）、按路径解析适用规则、逐文件「覆盖清单」（漏一个不许收工）、工具失败一律 **fail-closed**（非零退出 / 空输出 / 截断 / 取消都算错误，不得报「干净」）。受影响包用图查询枚举，不靠 grep 猜范围。
+- **review 阶段改为证据型工作流**：固定 git 快照后再评审、证据三要素（文件:行号 + 引用原文 + 复现输出）、证据不足降级为「疑似 / 未验证」、增量复查只扫新增变化且问题用稳定编号（R1、R2…）保留历轮状态、3 轮不收敛转人工。
+- **两级 review 节奏**：开发中走小 review（管深，随任务），版本冻结时跑 OCR 打板大 review（管广，`delegate` 模式；OCR 二进制不进包，`managed` 模式禁用以免代码外发）。
+- **图查询行为层接入 `codebase-memory-mcp`**：design 阶段先查分层与波及面再写方案、`sun-trellis-before-dev` 用图上下文（相关文件与调用边）替代 grep 枚举、check 用 `trace_path` / `impact` 枚举受影响包；新增共享协议 `skills/_templates/graph-queries.md`（索引纪律、换参重试上限 2 次、升级后旧 daemon 锁写的坑、Qt 仓库门禁、服务缺失时的降级口径）。
+
+## 兼容性
+
+- **`spec-delta.md` 进入 `sun_trellis_artifact_update` 白名单**：规划期 `write` 被只读守卫遮蔽，产物工具是唯一可写通道，不加白名单 delta 根本写不进去。
+- **新模板随包分发并随版本重新播种**：`skills/_templates/feat/spec-delta.md` 与 `skills/_templates/graph-queries.md` 均已进 `files` 白名单（`npm pack` 验证）；版本号抬到 1.1.0，已装项目按 `.trellis-version` 标记重新播种技能与模板，避免 skill 文本停留旧版。
+- **不新增依赖**：图服务与 OCR 都作外部依赖，插件仍零运行时依赖。
+
+## 测试
+
+- 新增 10 个测试：`spec-delta` 播种与产物工具写入、技能契约（delta 批准门 / check 定范围与 fail-closed / 证据型 review / 图协议引用）、4 个接缝断言（只读窗口放行产物工具、归档保留 delta 与合并记录、技能播种带上共享协议、真实工具面走完 create → spec-delta 写入）。`node --test` 318 → 328 全绿。
+
+---
+
+Ports three external mechanisms into the skill text (spec-delta / code review / graph queries) and closes the seams they open with the existing flow: behaviour lands in the skills, external dependencies stay out of the package.
+
+## Features
+
+- **`spec-delta` on the feat track**: the design stage now produces `spec-delta.md` alongside `design.md` (`ADDED` / `MODIFIED` / `REMOVED`, each naming its target file, section anchor and old text), and **both must be approved** before impl. `sun-trellis-finish-work` merges the approved delta into the resident specs verbatim — the old text must match byte-for-byte and anchors must exist without duplication, otherwise it **stops and asks instead of merging silently**; the merge record is written back and committed together with the business code. It is explicitly distinct from `sun-trellis-update-spec`: a delta is the contract increment of the change itself, a lesson is post-hoc reflection.
+- **Code review mechanics on the check side**: the change set is computed deterministically from `git diff` / `git status` (never listed from memory), rules are resolved by path, every changed file needs a verdict in the coverage list (no gaps allowed), and tool failures are **fail-closed** (non-zero exit / empty output / truncation / cancellation are errors, never "clean"). Affected packages are enumerated from the graph, not guessed with grep.
+- **Review stage is now evidence-based**: review against a pinned git snapshot, the three-part evidence rule (file:line + quoted source + reproducing output), weak evidence downgraded to "suspected / unverified", incremental re-reviews limited to new changes with stable issue numbers (R1, R2…) carrying their state across rounds, and escalation to a human after 3 non-converging rounds.
+- **Two-level review cadence**: a small in-flight review (deep, per task) plus an OCR sweep at version freeze (broad, `delegate` mode; the OCR binary is not bundled and `managed` mode is banned so code never leaves the machine).
+- **Graph query behaviour layer for `codebase-memory-mcp`**: design queries layering and blast radius before writing the plan, `sun-trellis-before-dev` hands the implementation a graph context instead of grep enumeration, and check enumerates affected packages via `trace_path` / `impact`. A shared protocol `skills/_templates/graph-queries.md` documents index hygiene, the 2-retry parameter-switch budget, the stale-daemon write-lock trap, the Qt gate and the degradation path.
+
+## Compatibility
+
+- **`spec-delta.md` added to the `sun_trellis_artifact_update` whitelist**: the planning window masks `write`, so the artifact tool is the only writable channel — without the whitelist the delta could never be authored.
+- **New templates ship with the package and are re-provisioned on upgrade**: `skills/_templates/feat/spec-delta.md` and `skills/_templates/graph-queries.md` are in the `files` allowlist (verified with `npm pack`); the version is raised to 1.1.0 so installed projects re-seed their skills and templates through the `.trellis-version` marker instead of keeping stale skill text.
+- **No new dependencies**: both the graph service and OCR stay external; the plugin still has zero runtime dependencies.
+
+## Tests
+
+- Ten new tests: `spec-delta` seeding and artifact-tool authoring, skill contracts (delta gate / check scope + fail-closed / evidence-based review / graph protocol citations) and four seam assertions (the planning window keeps the artifact tool, archiving preserves the delta and its merge record, provisioning ships the shared protocol, and the real tool surface drives create → spec-delta write). `node --test` goes from 318 to 328, all green.
+
+---
+
 ## v1.0.0 — 2026-11-25
 
 sun-Trellis 首个版本。分叉基线：上游 `@banana-peeljj12/dsh-trellis` v0.5.1；与上游的逐项差异见 [FORK.md](./FORK.md)。
