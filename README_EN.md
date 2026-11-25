@@ -46,10 +46,11 @@ In complex, multi-turn AI coding workflows, typical pain points include:
 
 ### 1. Installation
 
-Ensure Node.js ≥ 20 is installed, then run in your terminal:
+Ensure Node.js ≥ 20 is installed. This fork ships through git and is **not published to npm**, so install it from a clone:
 
 ```sh
-dsh plugin --profile web add dsh-trellis-sun@latest
+git clone https://github.com/supersun3757/dsh-trellis-sun
+dsh plugin --profile web add link:<absolute path of the clone>
 ```
 
 After installation, **restart the DSH service**.

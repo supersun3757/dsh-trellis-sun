@@ -12,9 +12,9 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 
 ---
 
-## Unreleased — sun-Trellis fork
+## v1.0.0 — 2026-11-25
 
-分叉基线：上游 `@banana-peeljj12/dsh-trellis` v0.5.1。下列条目属于本分支，与上游版本号无关；详细差异见 [FORK.md](./FORK.md)。
+sun-Trellis 首个版本。分叉基线：上游 `@banana-peeljj12/dsh-trellis` v0.5.1；与上游的逐项差异见 [FORK.md](./FORK.md)。
 
 ## 兼容性
 
@@ -31,11 +31,13 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 
 - **新增 `FORK.md`**：逐项记录与上游的差异、刻意不改的部分，以及"不做子智能体机制 / 不做 `trellis_wait`"的范围边界。
 
+## 构建
+
+- **发布管道改为按需发布 npm**：本分支通过 git / `dsh plugin add` 分发，`release.yml` 的 `npm publish` 改为仅在仓库配置了 `NPM_TOKEN` 时执行；推 `v*` tag 仍会按 `CHANGELOG.md` 自动生成 GitHub Release。
+
 ---
 
-## Unreleased — sun-Trellis fork (English)
-
-Fork baseline: upstream `@banana-peeljj12/dsh-trellis` v0.5.1. The entries below belong to this branch and are independent of the upstream version numbering; see [FORK.md](./FORK.md) for the full divergence list.
+The first sun-Trellis release. Fork baseline: upstream `@banana-peeljj12/dsh-trellis` v0.5.1; see [FORK.md](./FORK.md) for the item-by-item divergence.
 
 ## Compatibility
 
@@ -51,6 +53,10 @@ Fork baseline: upstream `@banana-peeljj12/dsh-trellis` v0.5.1. The entries below
 ## Docs
 
 - **Added `FORK.md`**: a per-item record of the divergence from upstream, what is deliberately left untouched, and the scope boundary of "no sub-agent mechanism / no `trellis_wait`".
+
+## Build
+
+- **Release pipeline publishes to npm only on demand**: this fork is distributed through git / `dsh plugin add`, so the `npm publish` step in `release.yml` now runs only when the repository has an `NPM_TOKEN` secret; pushing a `v*` tag still builds the GitHub Release body from `CHANGELOG.md`.
 
 ---
 

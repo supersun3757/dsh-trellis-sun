@@ -18,6 +18,10 @@ jobs:
   release:
     name: Build & Publish Release
     runs-on: ubuntu-latest
+    # This fork ships through git / `dsh plugin add`; publishing to npm is opt-in
+    # and only happens when the repository actually has an NPM_TOKEN secret.
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -40,9 +44,8 @@ jobs:
         run: npm test
 
       - name: Publish to npm
+        if: env.NODE_AUTH_TOKEN != ''
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Build distribution package
         run: |

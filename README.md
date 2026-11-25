@@ -46,10 +46,11 @@
 
 ### 1. 安装插件
 
-确保环境 Node.js ≥ 20，在终端运行：
+确保环境 Node.js ≥ 20。本分支通过 git 分发、**不发布到 npm**，因此用本地/克隆目录安装：
 
 ```sh
-dsh plugin --profile web add dsh-trellis-sun@latest
+git clone https://github.com/supersun3757/dsh-trellis-sun
+dsh plugin --profile web add link:<克隆目录绝对路径>
 ```
 
 安装完成后**重启 DSH 服务**。
