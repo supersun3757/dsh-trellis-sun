@@ -330,6 +330,9 @@ test('assertSafeArtifactPath confines writes to the task directory', () => {
   assert.ok(ALLOWED_ARTIFACTS.has('report.md'))
   assert.ok(ALLOWED_ARTIFACTS.has('refactor-design.md'))
   assert.ok(ALLOWED_ARTIFACTS.has('apply-notes.md'))
+  // feat spec-delta is authored during the read-only planning window, so the
+  // artifact tool is the only writable channel — it must be whitelisted.
+  assert.ok(ALLOWED_ARTIFACTS.has('spec-delta.md'))
 
   assert.throws(() => assertSafeArtifactPath('/proj', 'x', 'not-allowed.md'), /不允许更新非标准产物/)
   assert.throws(() => assertSafeArtifactPath('/proj', 'x', '../src/main.cs'), /不允许|路径越权/)
@@ -353,6 +356,35 @@ test('updateTaskArtifact writes a sanctioned artifact end-to-end', async () => {
     assert.equal(res.ok, true)
     const written = readFileSync(path.join(root, '.trellis', 'tasks', slug, 'prd.md'), 'utf8')
     assert.match(written, /# PRD/)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('createTaskRecord seeds the feat spec-delta template and keeps it writable', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'trellis-spec-delta-'))
+  try {
+    const fs = mockFs(root)
+    const slug = 'feat-11-25-spec-delta'
+    const created = await createTaskRecord(fs, root, { title: 'Spec delta demo', workType: 'feat', slug })
+    assert.equal(created.ok, true)
+    assert.ok(created.seeded.includes('spec-delta.md'), `seeded: ${created.seeded.join(', ')}`)
+
+    // Wildcard seeding: the task dir AND the project template dir both get it.
+    const taskCopy = path.join(root, '.trellis', 'tasks', slug, 'spec-delta.md')
+    const tplCopy = path.join(root, '.trellis', 'templates', 'feat', 'spec-delta.md')
+    assert.match(readFileSync(taskCopy, 'utf8'), /status: draft/)
+    assert.match(readFileSync(tplCopy, 'utf8'), /合并记录/)
+
+    // The planning window masks `write`, so the artifact tool must accept it.
+    const res = await updateTaskArtifact(
+      fs,
+      root,
+      { artifact: 'spec-delta.md', slug, content: '# Spec Delta\n\nstatus: approved\n\n无增量：纯文案调整\n' },
+      { sessionId: undefined },
+    )
+    assert.equal(res.ok, true)
+    assert.match(readFileSync(taskCopy, 'utf8'), /无增量/)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

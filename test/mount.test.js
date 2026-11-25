@@ -1,8 +1,47 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, statSync, readdirSync, existsSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 
 import plugin from '../lib/index.js'
+
+/** dsh-fs stand-in over a real temp directory. */
+function mockFs() {
+  const target = (p) => ({ targetKey: path.resolve(p), displayPath: p })
+  return {
+    sandboxMode: undefined,
+    async resolve(p) {
+      return target(p)
+    },
+    async stat(t) {
+      try {
+        const s = statSync(t.targetKey)
+        return s.isFile() ? { type: 'file' } : s.isDirectory() ? { type: 'dir' } : { type: 'other' }
+      } catch {
+        return undefined
+      }
+    },
+    async readText(t) {
+      return readFileSync(t.targetKey, 'utf8')
+    },
+    async listDir(t) {
+      try {
+        return readdirSync(t.targetKey, { withFileTypes: true }).map((entry) => ({
+          name: entry.name,
+          target: target(path.join(t.targetKey, entry.name)),
+        }))
+      } catch {
+        return []
+      }
+    },
+    async writeText(t, content) {
+      mkdirSync(path.dirname(t.targetKey), { recursive: true })
+      writeFileSync(t.targetKey, content)
+    },
+  }
+}
 
 /**
  * Mount the host half on a real cordis Context with stub services.
@@ -121,4 +160,64 @@ test('the mounted plugin exposes a working effective config', async () => {
   )
   assert.equal(value.project, 'F:/proj', 'the allowlist from config did not resolve')
   assert.equal(value.matched, true)
+})
+
+/**
+ * The seam that only shows up through the model-facing surface: a feat task is
+ * created by the `sun_trellis_task_create` tool, the planning window masks
+ * `write`, and the seeded `spec-delta.md` is then authored through
+ * `sun_trellis_artifact_update` — the only channel the model has in planning.
+ */
+test('the mounted tools carry a feat task through spec-delta authoring', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'trellis-mount-seam-'))
+  try {
+    const root = new Context()
+    const tools = new Map()
+    root.provide('fs', mockFs())
+    root.provide('skills', {})
+    root.provide('tools', {
+      register(definition) {
+        tools.set(definition.name, definition)
+        return () => {}
+      },
+    })
+    root.provide('agents', { currentInitiator: () => undefined })
+
+    root.plugin(plugin, { allowlist: [dir] })
+    await new Promise((resolve) => setTimeout(resolve, 250))
+
+    const exec = { agent: { session: { id: 'seam-session', header: { cwd: dir } } } }
+    const slug = 'feat-11-25-mount-seam'
+
+    const createTool = tools.get('sun_trellis_task_create')
+    assert.ok(createTool, 'sun_trellis_task_create was not registered')
+    const created = await createTool.execute({ cwd: dir, workType: 'feat', title: 'Mount seam', slug }, exec)
+    assert.equal(created.ok, true, `create failed: ${created.error}`)
+    assert.ok(created.seeded.includes('spec-delta.md'), `seeded: ${created.seeded.join(', ')}`)
+    assert.equal(created.stage, 'prd')
+
+    const deltaPath = path.join(dir, '.trellis', 'tasks', slug, 'spec-delta.md')
+    assert.equal(existsSync(deltaPath), true, 'spec-delta.md was not seeded into the task dir')
+
+    const artifactTool = tools.get('sun_trellis_artifact_update')
+    assert.ok(artifactTool, 'sun_trellis_artifact_update was not registered')
+    const written = await artifactTool.execute(
+      {
+        cwd: dir,
+        slug,
+        artifact: 'spec-delta.md',
+        content: '# Spec Delta\n\nstatus: approved\n\n无增量：本任务不触及常驻 spec\n',
+      },
+      exec,
+    )
+    assert.equal(written.ok, true, `artifact write failed: ${written.error}`)
+    assert.match(readFileSync(deltaPath, 'utf8'), /无增量：本任务不触及常驻 spec/)
+
+    // A non-feat artifact stays rejected: the whitelist is not a blanket pass.
+    const rejected = await artifactTool.execute({ cwd: dir, slug, artifact: 'gossip.md', content: 'x' }, exec)
+    assert.equal(rejected.ok, false)
+    assert.match(rejected.error, /不允许更新非标准产物/)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 })

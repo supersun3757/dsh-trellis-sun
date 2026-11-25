@@ -34,8 +34,9 @@ description: "功能特性工作流：新功能开发或重大特性改造，按
 
 ## 模板初始化（首次使用）
 
-若 `.trellis/templates/feat/` 不存在，把本技能资源目录的 `_templates/feat/*` 复制过去，
-并把 `_templates/work-types.md` 复制到 `.trellis/templates/work-types.md`。已存在则跳过。
+若 `.trellis/templates/feat/` 不存在，把本技能资源目录的 `_templates/feat/*`（`prd.md` / `design.md` /
+`spec-delta.md` / `review.md`）复制过去，并把 `_templates/work-types.md` 复制到
+`.trellis/templates/work-types.md`。已存在则跳过。
 
 ## 参数意图（可选）
 
@@ -66,41 +67,77 @@ epic/多交付物 → parent + child tasks（父任务管集成验收）。
 | 条件 | stage | 下一步 |
 |------|-------|--------|
 | 无/空 `prd.md` | prd | 写 prd（可 `sun-trellis-brainstorm`） |
-| 有 prd；standard 且无 design 或 design.status≠approved | design | 写/改 `design.md`（聚焦需求拆解与实现方案，按 YAGNI/KISS 保持精简），**等人确认** |
-| design approved；planning 产物齐 + 人卡通过 | 规划期用 `sun_trellis_task_update` 录入 `steps`（含验收与 `verification`）；写 `task.json.status=in_progress` | 进入 impl |
+| 有 prd；standard 且无 design 或 design.status≠approved | design | 写/改 `design.md`（聚焦需求拆解与实现方案，按 YAGNI/KISS 保持精简）**与 `spec-delta.md`**（本次改动对常驻 spec 的增量），**等人同时确认两者** |
+| design 与 spec-delta 均 approved；planning 产物齐 + 人卡通过 | 规划期用 `sun_trellis_task_update` 录入 `steps`（含验收与 `verification`）；写 `task.json.status=in_progress` | 进入 impl |
 | in_progress；代码未完成 | impl | `sun-trellis-before-dev` → 按 `task.json.steps` 逐步实现（可派实现子代理） |
-| 实现完成；review 非 passed | review | **派独立子代理**写 `review.md`；机械自修可另用 `sun-trellis-check` |
+| 实现完成；review 非 passed | review | **派独立子代理**按「证据型 code review」写 `review.md`；机械自修可另用 `sun-trellis-check` |
 | review 过；check 未通过 | check | 派 `sun-trellis-check`，按项目配置的规范文件与质量门验证；将结果写入 `review.md` |
-| check 通过 | finish | `sun-trellis-update-spec`（如有）→ commit → `sun-trellis-finish-work` / archive |
+| check 通过 | finish | `sun-trellis-update-spec`（教训）→ 应用 `spec-delta`（归档时机械合并，见 finish-work）→ commit → `sun-trellis-finish-work` / archive |
 
 **Quick 路径**：prd（可轻）→（可选极简 design）→ 写 `status=in_progress` → impl → check/review 精简 → finish。
-仍禁止无验收标准就开写。
+仍禁止无验收标准就开写。Quick 不涉及常驻 spec 时，`spec-delta.md` 写「无增量：<原因>」并随 design 一起确认
+（文件由播种生成，不留空、不删除）。
+
+## design 阶段的图查询
+
+写 `design.md` 与 `spec-delta.md` 之前先查图，把波及面写进 design，而不是凭印象列模块：
+
+- `get_architecture`：看分层与模块骨架，确认改动该落在哪一层。
+- `trace_path` / `impact`：看改动上下游与受影响包，结论写进「涉及模块与边界」。
+- 索引纪律、换参重试上限、旧 daemon 坑、Qt 仓库门禁与降级口径见 `_templates/graph-queries.md`。
+- 图服务不可用时退回文本检索，并在 design 里写明「图服务不可用，改用文本检索」与未覆盖范围。
+
+## spec-delta 与 update-spec 的区分
+
+| | `spec-delta.md`（本技能 design 阶段） | `sun-trellis-update-spec`（收尾阶段） |
+|---|---|---|
+| 对象 | **改动本身**对常驻 spec 的增量 | 实施中复盘出的**教训与经验** |
+| 时机 | 事前写、随 design 一起批准 | 事后判断，可结论为「无需更新」 |
+| 落地 | 归档时由 finish-work **逐条机械合并** | 由 update-spec 判断归属后写入 |
+| 禁止 | 编造增量、未批准就合并 | 把零碎业务实现当规范抄录 |
+
+两者不互相替代：delta 负责「改动要改规范」，lesson 负责「踩过的坑要留档」。
+
+## code review（证据型工作流）
+
+review 阶段由**独立子代理**执行，按下面的证据型流程写 `review.md`：
+
+1. **固定快照**：先 `git rev-parse HEAD` 记入 `review.md` 的「Diff 范围」；评审基于该快照的 `git diff`，不看工作区漂移状态。工作区有未提交改动时，先提交或在产物里标注「未纳入快照」。
+2. **证据三要素**：每条发现必须给「文件:行号 + 引用原文 + 复现命令/输出」；三者缺一不能当证据，引用对不上就不能写成发现。
+3. **证据不足降级表述**：只有间接线索的结论写「疑似 / 未验证」并说明缺什么证据；**不许把猜测写成发现**。
+4. **增量复查**：上一轮之后只扫新增变化（`git diff <上轮快照>..HEAD`），不重扫全量；问题用稳定编号（R1、R2…）并保留历轮状态（open / fixed / wontfix）。
+5. **多轮不收敛转人工**：同一问题连续 3 轮仍 blocking，或总轮次超过 3 轮仍不收敛，停下交人工裁决，不无限循环。
+
+两级节奏：**开发中走小 review**（本阶段，管深，有 prd/design/spec-delta 上下文）；**版本冻结打板时另跑一次 OCR 大 review**（管广，跨模块一致性、规则型问题与残渣）——见 `_templates/work-types.md` 的「Review 节奏」。
 
 ## 人卡点（硬）
 
-1. **design 未 approved**（standard）→ 禁止写 `status=in_progress`、禁止改业务代码。
+1. **design 与 spec-delta 未 approved**（standard）→ 禁止写 `status=in_progress`、禁止改业务代码。
 2. **code review = blocking**（`review.md`）→ 禁止 archive；应回到 impl 修复后重审。
 3. **`sun-trellis-check` 或任务要求的验证未通过** → 禁止宣称完成 / archive。
-4. 用户对 design 的确认必须是**本回合之后**的明确回复；创建 task ≠ 批准实现。
+4. **spec-delta 未 approved 或核对失败** → 禁止合并进常驻 spec（见 `sun-trellis-finish-work`）。
+5. 用户对 design 的确认必须是**本回合之后**的明确回复；创建 task ≠ 批准实现。
 
 ## 产物
 
-从 `_templates/feat/` 复制（若 task 目录不存在）：
+从 `_templates/feat/` 复制（若 task 目录不存在；`sun_trellis_task_create` 会按目录通配播种）：
 
 ```text
 prd.md
 design.md
+spec-delta.md
 review.md
 ```
 
 > 执行步骤清单不设独立文件：一律由 `task.json.steps` 承载（规划期录入、执行期单步推进）。
+> 规划期写 `design.md` / `spec-delta.md` 必须走 `sun_trellis_artifact_update`（`write` 在只读守卫下不可用）。
 
 ## 子代理调度
 
 | 阶段 | 子代理 | 写入 | 说明 |
 |------|--------|------|------|
 | impl | 实现子代理（可选） | 业务代码 | 按 prd/design 实现 |
-| review | 独立子代理 | `review.md` | 独立代码审查（findings-first） |
+| review | 独立子代理 | `review.md` | 独立代码审查（证据型，见上节） |
 | 自修/验证 | `sun-trellis-check` | 可改代码 | 对照 spec 自修 + 项目验证门；与独立审查互补，不互相替代 |
 
 调度要求：
@@ -125,6 +162,8 @@ review.md
 ## 反模式
 
 - 未批准 design 就写 `status=in_progress`
+- 未批准 `spec-delta` 就合并进常驻 spec，或核对失败时「差不多」匹配
+- 把猜测写成 review 发现，或拿工作区漂移状态当评审基线
 - 为了“预留未来需求”引入不必要的抽象与接口（违背 YAGNI）
 - Quick 名义下改跨模块契约
 - 用实现细节充当验收标准，跳过 prd 验收

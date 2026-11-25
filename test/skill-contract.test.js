@@ -104,3 +104,62 @@ test('spec skills carry a complete and valid doc.json context', () => {
   assert.doesNotMatch(bootstrap, /"files"\s*:\s*\[\s*"\$root\//)
   assert.ok(!bootstrap.includes('$root/`n'), 'directory tree must not contain a literal `n')
 })
+
+test('feat track wires spec-delta into the design gate and the archive merge', () => {
+  const feat = read('skills/sun-trellis-feat/SKILL.md')
+  assert.match(feat, /spec-delta\.md/, 'feat skill must name spec-delta.md')
+  assert.match(feat, /design 与 spec-delta 均 approved/, 'the design gate must cover both artifacts')
+  assert.match(feat, /无增量/, 'the empty-delta convention must be stated')
+  assert.match(feat, /update-spec/, 'spec-delta must be distinguished from update-spec')
+  assert.match(feat, /sun_trellis_artifact_update/, 'planning writes must route through the artifact tool')
+
+  const finish = read('skills/sun-trellis-finish-work/SKILL.md')
+  assert.match(finish, /应用 spec-delta/, 'finish-work must apply the delta')
+  assert.match(finish, /逐字一致/, 'the merge must verify the old text verbatim')
+  assert.match(finish, /禁止合并/, 'an unapproved delta must never be merged')
+  assert.match(finish, /停下询问/, 'a failed check must stop and ask instead of merging silently')
+
+  const types = read('skills/_templates/work-types.md')
+  assert.match(types, /spec-delta\.md/, 'the feat stage table must list spec-delta.md')
+})
+
+test('check skill states scope, rule lookup, coverage and fail-closed', () => {
+  const text = read('skills/sun-trellis-check/SKILL.md')
+  assert.match(text, /第一步：定范围/, 'the scope step must be explicit')
+  assert.match(text, /git diff --name-only/, 'the change set must come from git, not from memory')
+  assert.match(text, /第二步：取规则/, 'rules must be resolved from paths')
+  assert.match(text, /覆盖清单/, 'every changed file needs a verdict')
+  assert.match(text, /fail-closed/, 'tool failures must be reported as errors')
+  assert.match(text, /无适用规范/, 'unmatched paths must be labelled, not invented')
+})
+
+test('review stage carries the evidence-based workflow and the two-level cadence', () => {
+  const feat = read('skills/sun-trellis-feat/SKILL.md')
+  assert.match(feat, /证据型工作流/, 'the review stage must be evidence-based')
+  assert.match(feat, /固定快照/, 'reviews must pin a git snapshot')
+  assert.match(feat, /引用原文/, 'findings must quote the source text')
+  assert.match(feat, /疑似/, 'weak evidence must be downgraded, not asserted')
+  assert.match(feat, /3 轮/, 'non-convergence must escalate to a human')
+
+  const types = read('skills/_templates/work-types.md')
+  assert.match(types, /Review 节奏/, 'the two-level cadence must be documented')
+  assert.match(types, /delegate/, 'OCR must run in delegate mode (no code exfiltration)')
+})
+
+test('graph queries are an external dependency with an explicit degradation path', () => {
+  const doc = read('skills/_templates/graph-queries.md')
+  assert.match(doc, /外部依赖/, 'the graph service must be declared external')
+  assert.match(doc, /索引纪律/)
+  assert.match(doc, /cbm-mcp-preflight/, 'the stale-daemon trap must be documented')
+  assert.match(doc, /换参重试 2 次/, 'retry budget must be bounded')
+  assert.match(doc, /降级/, 'there must be a degradation path')
+  assert.match(doc, /Qt/, 'the Qt precision gate must be documented')
+
+  for (const rel of [
+    'skills/sun-trellis-feat/SKILL.md',
+    'skills/sun-trellis-before-dev/SKILL.md',
+    'skills/sun-trellis-check/SKILL.md',
+  ]) {
+    assert.match(read(rel), /_templates\/graph-queries\.md/, `${rel} must point at the shared protocol`)
+  }
+})
