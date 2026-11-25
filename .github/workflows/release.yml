@@ -18,10 +18,10 @@ jobs:
   release:
     name: Build & Publish Release
     runs-on: ubuntu-latest
-    # This fork ships through git / `dsh plugin add`; publishing to npm is opt-in
-    # and only happens when the repository actually has an NPM_TOKEN secret.
-    env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    # This fork ships through git / `dsh plugin add`; publishing to npm is opt-in.
+    # The switch is a repository *variable* (`PUBLISH_TO_NPM=true`), not the mere
+    # presence of an `NPM_TOKEN` secret: a stale token would otherwise fail every
+    # tag push and take the GitHub Release down with it.
 
     steps:
       - name: Checkout repository
@@ -44,8 +44,10 @@ jobs:
         run: npm test
 
       - name: Publish to npm
-        if: env.NODE_AUTH_TOKEN != ''
+        if: vars.PUBLISH_TO_NPM == 'true'
         run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Build distribution package
         run: |
