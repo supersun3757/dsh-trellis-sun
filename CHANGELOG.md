@@ -29,10 +29,11 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 - **`spec-delta.md` 进入 `sun_trellis_artifact_update` 白名单**：规划期 `write` 被只读守卫遮蔽，产物工具是唯一可写通道，不加白名单 delta 根本写不进去。
 - **新模板随包分发并随版本重新播种**：`skills/_templates/feat/spec-delta.md` 与 `skills/_templates/graph-queries.md` 均已进 `files` 白名单（`npm pack` 验证）；版本号抬到 1.1.0，已装项目按 `.trellis-version` 标记重新播种技能与模板，避免 skill 文本停留旧版。
 - **不新增依赖**：图服务与 OCR 都作外部依赖，插件仍零运行时依赖。
+- **升级进行中的老任务不会被 `spec-delta` 卡住**：1.1.0 之前创建的任务目录里没有 `spec-delta.md`，收尾第 0 步对「文件不存在」明确按无增量继续（并禁止凭记忆补写），只有「文件存在但未 approved」才停下询问；`work.type` 为空的历史任务同样适用。
 
 ## 测试
 
-- 新增 10 个测试：`spec-delta` 播种与产物工具写入、技能契约（delta 批准门 / check 定范围与 fail-closed / 证据型 review / 图协议引用）、4 个接缝断言（只读窗口放行产物工具、归档保留 delta 与合并记录、技能播种带上共享协议、真实工具面走完 create → spec-delta 写入）。`node --test` 318 → 328 全绿。
+- 新增 11 个测试：`spec-delta` 播种与产物工具写入、技能契约（delta 批准门 / check 定范围与 fail-closed / 证据型 review / 图协议引用）、5 个接缝断言（只读窗口放行产物工具、归档保留 delta 与合并记录、技能播种带上共享协议、真实工具面走完 create → spec-delta 写入、**1.1.0 之前没有 delta 的任务照样能归档**）。`node --test` 318 → 329 全绿。
 
 ---
 
@@ -51,10 +52,11 @@ Ports three external mechanisms into the skill text (spec-delta / code review / 
 - **`spec-delta.md` added to the `sun_trellis_artifact_update` whitelist**: the planning window masks `write`, so the artifact tool is the only writable channel — without the whitelist the delta could never be authored.
 - **New templates ship with the package and are re-provisioned on upgrade**: `skills/_templates/feat/spec-delta.md` and `skills/_templates/graph-queries.md` are in the `files` allowlist (verified with `npm pack`); the version is raised to 1.1.0 so installed projects re-seed their skills and templates through the `.trellis-version` marker instead of keeping stale skill text.
 - **No new dependencies**: both the graph service and OCR stay external; the plugin still has zero runtime dependencies.
+- **Tasks already in flight are not blocked by a missing delta after the upgrade**: a task directory created before 1.1.0 has no `spec-delta.md` at all, so finish step 0 treats a missing file as "no increment" and continues (fabricating one from memory is forbidden) — only a file that exists but is not approved stops to ask. Legacy tasks with an empty `work.type` are covered by the same branch.
 
 ## Tests
 
-- Ten new tests: `spec-delta` seeding and artifact-tool authoring, skill contracts (delta gate / check scope + fail-closed / evidence-based review / graph protocol citations) and four seam assertions (the planning window keeps the artifact tool, archiving preserves the delta and its merge record, provisioning ships the shared protocol, and the real tool surface drives create → spec-delta write). `node --test` goes from 318 to 328, all green.
+- Eleven new tests: `spec-delta` seeding and artifact-tool authoring, skill contracts (delta gate / check scope + fail-closed / evidence-based review / graph protocol citations) and five seam assertions (the planning window keeps the artifact tool, archiving preserves the delta and its merge record, provisioning ships the shared protocol, the real tool surface drives create → spec-delta write, and a pre-1.1.0 task with no delta still archives). `node --test` goes from 318 to 329, all green.
 
 ---
 

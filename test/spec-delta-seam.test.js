@@ -143,6 +143,39 @@ test('seam 3 — the delta and its merge record survive the archive move', async
   }
 })
 
+test('seam 5 — a pre-1.1.0 feat task without spec-delta.md still archives', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'trellis-seam-legacy-'))
+  const slug = 'feat-10-01-legacy-no-delta'
+  try {
+    const fs = mockFs(root)
+    const created = await createTaskRecord(fs, root, { title: 'Legacy feat without delta', workType: 'feat', slug })
+    assert.equal(created.ok, true)
+
+    const taskDir = path.join(root, '.trellis', 'tasks', slug)
+    const deltaPath = path.join(taskDir, 'spec-delta.md')
+    assert.equal(existsSync(deltaPath), true, 'a 1.1.0 feat task seeds the delta')
+
+    // A task directory created before 1.1.0 carries no delta at all. Finishing
+    // it after the upgrade must not require the file, and must not invent one.
+    rmSync(deltaPath, { force: true })
+    writeFileSync(
+      path.join(taskDir, 'task.json'),
+      JSON.stringify({ title: 'Legacy feat without delta', status: 'completed', work: { type: 'feat', stage: 'check' } }),
+    )
+
+    const res = await archiveTaskRecord(fs, root, { slug }, {}, undefined, { now: new Date(2025, 10, 25) })
+    assert.equal(res.ok, true, `archive must not require the delta: ${JSON.stringify(res)}`)
+    // The bucket follows the slug's `mm-dd` (10-01 -> 2025-10), not `now`.
+    assert.equal(res.taskDir, `.trellis/tasks/archive/2025-10/${slug}`)
+
+    const archived = path.join(root, '.trellis', 'tasks', 'archive', '2025-10', slug)
+    assert.equal(existsSync(path.join(archived, 'task.json')), true, 'the task must still archive')
+    assert.equal(existsSync(path.join(archived, 'spec-delta.md')), false, 'no delta must be fabricated')
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('seam 4 — provisioning ships the shared graph protocol next to the skills that cite it', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'trellis-seam-provision-'))
   try {

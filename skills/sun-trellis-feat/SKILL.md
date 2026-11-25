@@ -76,7 +76,8 @@ epic/多交付物 → parent + child tasks（父任务管集成验收）。
 
 **Quick 路径**：prd（可轻）→（可选极简 design）→ 写 `status=in_progress` → impl → check/review 精简 → finish。
 仍禁止无验收标准就开写。Quick 不涉及常驻 spec 时，`spec-delta.md` 写「无增量：<原因>」并随 design 一起确认
-（文件由播种生成，不留空、不删除）。
+（文件由播种生成，不留空、不删除）。若任务目录里根本没有 `spec-delta.md`（1.1.0 之前创建的任务），
+按无增量收尾：不补写、不因此停下。
 
 ## design 阶段的图查询
 

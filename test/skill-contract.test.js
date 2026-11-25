@@ -119,8 +119,16 @@ test('feat track wires spec-delta into the design gate and the archive merge', (
   assert.match(finish, /禁止合并/, 'an unapproved delta must never be merged')
   assert.match(finish, /停下询问/, 'a failed check must stop and ask instead of merging silently')
 
+  // Upgrade continuity: tasks created before the template existed have no
+  // delta at all. If step 0 only said "status must be approved", every legacy
+  // task would stall at finish. The missing-file branch must be explicit.
+  assert.match(finish, /视为无增量，直接继续收尾/, 'a missing delta must not block finish')
+  assert.match(finish, /文件不存在不算未批准/, 'the hard gate must not read "missing" as "unapproved"')
+  assert.match(feat, /按无增量收尾/, 'the quick path must cover a task with no delta file')
+
   const types = read('skills/_templates/work-types.md')
   assert.match(types, /spec-delta\.md/, 'the feat stage table must list spec-delta.md')
+  assert.match(types, /没有 delta 文件/, 'the stage table must state the missing-file branch')
 })
 
 test('check skill states scope, rule lookup, coverage and fail-closed', () => {

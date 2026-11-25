@@ -79,7 +79,7 @@ Trellis 核心三类工作流。
 | impl | 代码；步骤清单以 `task.json.steps` 为准 | 需先写 `status=in_progress`；`verification: human` 步骤须用户确认 |
 | review | `review.md`（独立子代理，证据型） | blocking 需修复；可选 `sun-trellis-check` 自修 |
 | check | `sun-trellis-check` 结果与验证证据（写入 `review.md`） | 必须通过后 archive |
-| finish | `spec-delta.md` 的合并记录 + `.trellis/journal/` 记录 | delta 未 approved 或核对失败 → 停下询问 |
+| finish | `spec-delta.md` 的合并记录 + `.trellis/journal/` 记录 | delta 未 approved 或核对失败 → 停下询问；**没有 delta 文件 → 按无增量继续**（老任务 / 非 feat 轨道） |
 
 Quick：`prd` 清晰且局部、无新跨系统契约时可精简 design；仍建议最小 prd + 实现后 check。
 
