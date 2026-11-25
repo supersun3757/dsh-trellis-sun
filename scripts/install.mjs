@@ -20,6 +20,17 @@
  * `WEB_SETTINGS_NAMESPACES` patch is needed anymore, so this installer no
  * longer patches dsh-host-apiproxy.
  *
+ * IMPORTANT — the row is a *targeted patch*, not an insertion. It overrides the
+ * config of a loader entry that must already exist, and that entry comes from
+ * the profile's bundle list: register the package first with
+ * `dsh plugin --profile <name> add <spec>`. On a profile where the entry is
+ * missing the host prints `patch: entry "trellis-workflow" not found` and skips
+ * the row, so the requested allowlist never takes effect — the installer is
+ * silent about that, which is why it must be documented here. An insertion
+ * would need the `- insert: [ ... ]` patch form, which this installer
+ * deliberately does not emit: doing so next to an existing bundle entry would
+ * load the plugin twice.
+ *
  * After a successful run, restart the DSH process for the profile. The package
  * `postinstall` hook invokes this script with `--auto` (safe, idempotent, and
  * skippable via `TRELLIS_SKIP_AUTO=1`), so a normal install of this package
@@ -340,6 +351,19 @@ function ensureLink(profileDir, dryRun) {
 // step 2 — cordis.patch.yml row
 // ---------------------------------------------------------------------------
 
+/**
+ * Serialise a value as a YAML double-quoted scalar.
+ *
+ * Windows paths are the common case: emitting `C:\Users` raw makes the YAML
+ * parser read `\U` as an escape sequence and reject the entire profile overlay
+ * ("expected hexadecimal character"), so the booted profile never starts.
+ * Backslashes and double quotes are escaped; every other character is left
+ * alone, which YAML accepts verbatim inside double quotes.
+ */
+function yamlQuoted(value) {
+  return `"${String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+}
+
 function buildRow(args) {
   const config = {}
   if (args.allowlist.length) config.allowlist = args.allowlist
@@ -353,12 +377,12 @@ function buildRow(args) {
       if (Array.isArray(v)) {
         if (v.length) {
           lines.push(`    ${k}:`)
-          for (const item of v) lines.push(`      - "${item}"`)
+          for (const item of v) lines.push(`      - ${yamlQuoted(item)}`)
         }
       } else if (typeof v === 'boolean' || typeof v === 'number') {
         lines.push(`    ${k}: ${v}`)
       } else {
-        lines.push(`    ${k}: "${String(v)}"`)
+        lines.push(`    ${k}: ${yamlQuoted(v)}`)
       }
     }
   }
