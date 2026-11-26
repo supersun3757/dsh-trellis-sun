@@ -1,10 +1,10 @@
 {
   "title": "v1.1.1 交付完整性：版本标记失效、缺强制重播种入口、大 review 无可执行定义",
-  "status": "in_progress",
+  "status": "completed",
   "work": {
     "type": "issue",
     "mode": "quick",
-    "stage": "fix-note",
+    "stage": "finish",
     "execution_lane": "quick"
   },
   "description": "修复审计发现的一批「改了但送不到」缺陷：(1) d26cb1c 改了 skills/** 却没抬 package.json 版本，已播种 1.1.0 的项目永远走 present 跳过分支，收不到「无 spec-delta 也继续收尾」的保护；(2) install.mjs 从不调用 ensureProjectSkills 且无 --reseed，重播种只能手工删 .trellis-version；(3) work-types.md 的大 review 只给了工具名，没有入口检查/调用定义/降级口径；(4) aeabf38 的安装器修复与 4 个测试没有版本条目，CHANGELOG.md 不在 files 白名单；(5) v1.1.0 tag 与 main 分叉（aeabf38 不在 tag 内）。",
@@ -76,7 +76,7 @@
     {
       "id": "verify-and-tag",
       "title": "全量回归 + 提交 + tag 理顺",
-      "status": "pending",
+      "status": "completed",
       "spec": "node --test 全绿；git diff --check 干净；独立 check 子代理无 blocking；提交后为 v1.1.1 打 annotated tag 并推送（不发 GitHub Release）。v1.1.0 已推送且为 annotated tag，不改写——安装器 YAML 修复归入 1.1.1 条目（见 fix-note 的 tag 处置）。",
       "acceptance": [
         "node --test 全绿且 fail 为 0",
@@ -86,9 +86,9 @@
       ],
       "verification": "ai",
       "verify": true,
-      "verified": false,
-      "verifiedBy": "",
-      "verificationNotes": ""
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "node --test 344/344 全绿；git diff --check 干净；独立 check 子代理判定 pass（0 blocking），5 条 should-fix 全部处置（4 修 1 记录）；提交 dd75998，annotated tag v1.1.1 已推送到 origin，main 与 origin/main 同步。按 fix-note 的「tag 处置」，v1.1.0 保持指向 d26cb1c 不改写（已推送的 annotated tag），安装器 YAML 修复归入 1.1.1 条目。"
     }
   ]
 }
