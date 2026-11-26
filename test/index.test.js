@@ -60,11 +60,11 @@ import {
 } from '../lib/board.js'
 
 test('meta constants', () => {
-  assert.equal(NAME, 'trellis-workflow')
-  assert.equal(SOURCE_KIND, 'trellis')
+  assert.equal(NAME, 'dsh-trellis-sun')
+  assert.equal(SOURCE_KIND, 'dsh-trellis-sun')
   assert.deepEqual(DEFAULT_ALLOWLIST, [])
-  assert.equal(SETTINGS_NAMESPACE, 'trellis-workflow')
-  assert.equal(API_PREFIX, '/trellis-workflow/api')
+  assert.equal(SETTINGS_NAMESPACE, 'dsh-trellis-sun')
+  assert.equal(API_PREFIX, '/dsh-trellis-sun/api')
 })
 
 test('validateSlug - valid patterns', () => {
@@ -836,7 +836,7 @@ test('updateTaskRecord and archiveTaskRecord enforce git cleanliness in git repo
 test('modified_files tool descriptions clarify call-time credential (NOT persisted)', () => {
   const indexPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'lib', 'index.js')
   const source = readFileSync(indexPath, 'utf8')
-  // Both sun_trellis_task_update and sun_trellis_task_archive must carry the credential
+  // Both dsh_trellis_sun_task_update and dsh_trellis_sun_task_archive must carry the credential
   // semantics so agents do not expect the field to be persisted into task.json.
   const matches = source.match(/NOT persisted into `task\.json`/g) || []
   assert.ok(matches.length >= 2, `expected >=2 occurrences of NOT persisted, got ${matches.length}`)

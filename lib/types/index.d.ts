@@ -7,7 +7,7 @@
  */
 
 /**
- * Phase ids the trigger and `sun_trellis_state` can report.
+ * Phase ids the trigger and `dsh_trellis_sun_state` can report.
  */
 export type TrellisPhase =
   | 'no_task'
@@ -101,7 +101,7 @@ export interface BoardTrack {
   completed: string
 }
 
-/** Shape of the `/trellis-workflow/api/board` payload. */
+/** Shape of the `/dsh-trellis-sun/api/board` payload. */
 export interface TrellisBoard {
   kind: 'board'
   /** Slug of the task bound to the requesting session, or null. */
@@ -111,7 +111,7 @@ export interface TrellisBoard {
   tracks: Record<'feat' | 'issue' | 'refactor', BoardTrack>
 }
 
-/** Shape returned by the `sun_trellis_artifact_update` tool. */
+/** Shape returned by the `dsh_trellis_sun_artifact_update` tool. */
 export interface TrellisArtifactUpdateResult {
   ok: boolean
   error: string | null
@@ -121,7 +121,7 @@ export interface TrellisArtifactUpdateResult {
   bytesWritten: number | null
 }
 
-/** Shape returned by the `sun_trellis_state` diagnostic tool. */
+/** Shape returned by the `dsh_trellis_sun_state` diagnostic tool. */
 export interface TrellisState {
   project: string
   phase: TrellisPhase
@@ -138,7 +138,7 @@ export interface TrellisState {
   slugReason: string | null
 }
 
-/** Shape returned by the `sun_trellis_task_create` tool. */
+/** Shape returned by the `dsh_trellis_sun_task_create` tool. */
 export interface TrellisTaskCreateResult {
   ok: boolean
   /** Human-readable error when ok=false, else null. */
@@ -162,7 +162,7 @@ export interface TrellisTaskCreateResult {
   initialized: string[] | null
 }
 
-/** Shape returned by the `sun_trellis_task_update` tool. */
+/** Shape returned by the `dsh_trellis_sun_task_update` tool. */
 export interface TrellisTaskUpdateResult {
   ok: boolean
   /** Human-readable error when ok=false, else null. */
@@ -194,7 +194,7 @@ export interface TrellisGitCheck {
   warning: string | null
 }
 
-/** Shape returned by the `sun_trellis_task_archive` tool. */
+/** Shape returned by the `dsh_trellis_sun_task_archive` tool. */
 export interface TrellisTaskArchiveResult {
   ok: boolean
   /** Human-readable error when ok=false, else null. */
@@ -221,7 +221,7 @@ export interface TrellisWorkflowConfig {
   skipKeywords: string[]
   /** Assume codex-inline dispatch mode when resolving phase names. */
   inline: boolean
-  /** Prune generic write/edit tools during the planning phase; only read tools and sun_trellis_artifact_update remain. */
+  /** Prune generic write/edit tools during the planning phase; only read tools and dsh_trellis_sun_artifact_update remain. */
   enforceReadonlyPlanning?: boolean
 }
 

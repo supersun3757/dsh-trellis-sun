@@ -15,7 +15,7 @@
 
 ---
 
-> **sun-Trellis 分支** — 本仓库 fork 自上游 `@banana-peeljj12/dsh-trellis` v0.5.1，主线跟随 DSH 0.2.2-rc.5 / Cordis 4.1.0。包名改为 `dsh-trellis-sun`，内置技能统一为 `dsh-trellis-sun-*`，内置工具沿用 `sun_trellis_*`（对外 API，不改名），可与项目中已有的 Trellis 技能并存而不互相覆盖。与上游的差异清单见 [FORK.md](./FORK.md)。
+> **sun-Trellis 分支** — 本仓库 fork 自上游 `@banana-peeljj12/dsh-trellis` v0.5.1，主线跟随 DSH 0.2.2-rc.5 / Cordis 4.1.0。包名改为 `dsh-trellis-sun`，内置技能统一为 `dsh-trellis-sun-*`，内置工具沿用 `dsh_trellis_sun_*`（对外 API，不改名），可与项目中已有的 Trellis 技能并存而不互相覆盖。与上游的差异清单见 [FORK.md](./FORK.md)。
 
 ## 项目简介
 
@@ -38,7 +38,7 @@
 - **可选规划期只读保护**：开启配置项后，可在方案获批前于运行时过滤掉代码写工具（`write` / `edit`），仅开放文档受控修改通道，确保方案敲定后再动代码。
 - **会话级状态隔离**：各会话的任务绑定关系独立存储在 `.trellis/.runtime/sessions/` 中，多会话与并发子代理并行工作时互不串扰。
 - **双模态任务看板（视觉语言 v2）**：常态为极简紧凑弹窗（当前绑定任务置顶为焦点卡片，内置高亮步骤清单与折叠态；下方按状态分组列出任务流），可一键展开为全屏大看板（按「进行中 / 规划中 / 已完成」分组表格，支持 `⌘K` 实时搜索与工作流类型筛选）；右侧详情面板内置 **Step Tracker 步骤流水线**、阶段轨道节点与产物文件列表。看板遵循**单强调色设计**与**克制交互**——不直接改任务状态，仅提供「▶ 推进任务」将指令安全填入输入框交由 Agent 执行，产物点击生成 `@.trellis/tasks/...` 原生文件引用交给 DSH 原生查看。
-- **Git 干净度校验（支持局部校验）**：任务完成和归档时自动检查 Git 工作区状态，防止遗留未提交的脏代码。若工作区存在与任务无关的未提交改动，可在 `sun_trellis_task_update` / `sun_trellis_task_archive` 中通过 `modified_files` 声明任务实际改动文件，校验将限缩到清单内文件（须已提交），清单外未提交改动仅告警、不再阻塞；未传该参数时保持全局严格校验。
+- **Git 干净度校验（支持局部校验）**：任务完成和归档时自动检查 Git 工作区状态，防止遗留未提交的脏代码。若工作区存在与任务无关的未提交改动，可在 `dsh_trellis_sun_task_update` / `dsh_trellis_sun_task_archive` 中通过 `modified_files` 声明任务实际改动文件，校验将限缩到清单内文件（须已提交），清单外未提交改动仅告警、不再阻塞；未传该参数时保持全局严格校验。
 
 ---
 
@@ -122,7 +122,7 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 - `completed`：验证通过后完结。
 
 #### 验证模式说明：
-- **自动化验证 (`verification: 'ai'`)**：模型编写代码后，必须先运行测试并调用 `sun_trellis_task_update` 填入 `verified: true` 与 `verificationNotes` 测试记录，随后才允许将状态更新为 `completed`，防止单次调用跳过测试。
+- **自动化验证 (`verification: 'ai'`)**：模型编写代码后，必须先运行测试并调用 `dsh_trellis_sun_task_update` 填入 `verified: true` 与 `verificationNotes` 测试记录，随后才允许将状态更新为 `completed`，防止单次调用跳过测试。
 - **人工验收卡点 (`verification: 'human'`)**：用于涉及核心契约或高风险操作的步骤。只有在用户明确同意且记录 `verifiedBy: 'human'` 后，该步骤才被允许标记为 `completed`。
 - **任务完结审计**：当任务标记为完成或发起归档时，系统会校验所有步骤是否均已完成并通过验证，同时校验 Git 工作区是否干净。
 
@@ -156,11 +156,11 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 
 | 授权状态 | 触发条件 | 被裁剪的工具 | 说明 |
 |---|---|---|---|
-| `undecided` | 项目在白名单内、无活跃任务且未声明跳过 | `write` / `edit` + `sun_trellis_task_update` / `sun_trellis_artifact_update` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | 移除代码写工具与任务写工具，避免盲目直接改写源码；`sun_trellis_task_create` / `sun_trellis_task_skip` 与所有其他工具（含其他插件工具）保留 |
-| `planning` | 任务处于规划类阶段（`prd`, `design`, `scan`, `report` 等） | `write` / `edit` + `sun_trellis_task_create` / `sun_trellis_task_skip` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | 移除通用 `write` / `edit` 工具与任务生命周期工具，仅放行受控的任务产物更新；`sun_trellis_task_update` / `sun_trellis_artifact_update` 与所有其他工具保留 |
+| `undecided` | 项目在白名单内、无活跃任务且未声明跳过 | `write` / `edit` + `dsh_trellis_sun_task_update` / `dsh_trellis_sun_artifact_update` / `dsh_trellis_sun_task_archive` / `dsh_trellis_sun_ui_update` | 移除代码写工具与任务写工具，避免盲目直接改写源码；`dsh_trellis_sun_task_create` / `dsh_trellis_sun_task_skip` 与所有其他工具（含其他插件工具）保留 |
+| `planning` | 任务处于规划类阶段（`prd`, `design`, `scan`, `report` 等） | `write` / `edit` + `dsh_trellis_sun_task_create` / `dsh_trellis_sun_task_skip` / `dsh_trellis_sun_task_archive` / `dsh_trellis_sun_ui_update` | 移除通用 `write` / `edit` 工具与任务生命周期工具，仅放行受控的任务产物更新；`dsh_trellis_sun_task_update` / `dsh_trellis_sun_artifact_update` 与所有其他工具保留 |
 | `authorized` | 任务进入实施阶段（`impl`, `fix`, `apply`）或用户已跳过 | 无（不裁剪） | 允许根据设计方案修改项目源码 |
 
-> 注：`sun_trellis_artifact_update` 仅允许写入当前任务目录（`.trellis/tasks/<slug>/`）内的白名单文档，杜绝跨目录修改。
+> 注：`dsh_trellis_sun_artifact_update` 仅允许写入当前任务目录（`.trellis/tasks/<slug>/`）内的白名单文档，杜绝跨目录修改。
 
 ---
 
@@ -168,13 +168,13 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 
 插件向运行时注册了以下专用工具：
 
-- **`sun_trellis_task_create`**：创建新的工作流任务，生成初始 `task.json` 与阶段交付物模板，并自动绑定当前会话。
-- **`sun_trellis_task_update`**：推进任务阶段、更新步骤进度、记录验证证据或更新任务信息，不改变当前会话绑定。显式传入 `slug` 只选择更新目标；切换任务请使用看板的激活按钮。
-- **`sun_trellis_artifact_update`**：安全更新任务交付文档（如 `prd.md`, `design.md`, `check.md` 等），受白名单和路径校验约束。
-- **`sun_trellis_task_archive`**：将已完成的任务归档至 `.trellis/tasks/archive/YYYY-MM/` 目录下，并解除当前会话绑定。
-- **`sun_trellis_task_skip`**：经用户同意后，在当前会话跳过 Trellis 工作流约束，直接放行全量工具权限。
-- **`sun_trellis_state`**：诊断并返回当前项目的 Trellis 运行时状态与任务信息。
-- **`sun_trellis_ui_update`**：主动刷新 Web 界面顶部的阶段徽章状态。
+- **`dsh_trellis_sun_task_create`**：创建新的工作流任务，生成初始 `task.json` 与阶段交付物模板，并自动绑定当前会话。
+- **`dsh_trellis_sun_task_update`**：推进任务阶段、更新步骤进度、记录验证证据或更新任务信息，不改变当前会话绑定。显式传入 `slug` 只选择更新目标；切换任务请使用看板的激活按钮。
+- **`dsh_trellis_sun_artifact_update`**：安全更新任务交付文档（如 `prd.md`, `design.md`, `check.md` 等），受白名单和路径校验约束。
+- **`dsh_trellis_sun_task_archive`**：将已完成的任务归档至 `.trellis/tasks/archive/YYYY-MM/` 目录下，并解除当前会话绑定。
+- **`dsh_trellis_sun_task_skip`**：经用户同意后，在当前会话跳过 Trellis 工作流约束，直接放行全量工具权限。
+- **`dsh_trellis_sun_state`**：诊断并返回当前项目的 Trellis 运行时状态与任务信息。
+- **`dsh_trellis_sun_ui_update`**：主动刷新 Web 界面顶部的阶段徽章状态。
 
 ---
 

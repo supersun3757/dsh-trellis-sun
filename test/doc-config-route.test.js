@@ -9,7 +9,7 @@ import { Context } from '@deepseek-ai/cordis'
 import plugin from '../lib/index.js'
 import { SPEC_INDEX_SECTION } from '../lib/spec.js'
 
-const DOC_CONFIG_PATH = '/trellis-workflow/api/doc-config'
+const DOC_CONFIG_PATH = '/dsh-trellis-sun/api/doc-config'
 
 /** dsh-fs stand-in over a real temp directory. */
 function mockFs() {
@@ -69,7 +69,7 @@ async function mountRoute({ cwd, allowlist = [cwd], sessionId = 'sess-1', config
   })
   root.provide('webServer', {
     register(definition) {
-      if (definition.path === '/trellis-workflow/api') handler = definition.handler
+      if (definition.path === '/dsh-trellis-sun/api') handler = definition.handler
       return () => {
         handler = null
       }

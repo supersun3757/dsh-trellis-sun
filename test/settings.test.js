@@ -20,7 +20,7 @@ function stripComments(source) {
 
 /**
  * Regression guard for the 0.1.7 activation failure:
- * `trellis-workflow: Error: cannot get property "config" without inject`.
+ * `dsh-trellis-sun: Error: cannot get property "config" without inject`.
  *
  * Cordis 4 guards `ctx.config`, so a getter that read it threw on every call —
  * including the `console.log(... effectiveConfig.get() ...)` at the end of

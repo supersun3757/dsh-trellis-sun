@@ -87,7 +87,7 @@ test('the doc editor registers as a top-level conversation view, not a settings 
 
   const view = registrations.find((registration) => registration.options.name === 'conversation.view')
   assert.ok(view, 'the project document view must register on conversation.view')
-  assert.equal(view.options.id, 'trellis-workflow:docs')
+  assert.equal(view.options.id, 'dsh-trellis-sun:docs')
   assert.equal(view.options.order, 20)
   assert.equal(view.options.locale, 'settings.trellisWorkflow')
   assert.equal(typeof view.options.label, 'function')
@@ -294,7 +294,7 @@ test('the budget block shows the effective caps and inherits placeholder default
 
 test('the editor talks to the doc-config route with read / preview / save actions', () => {
   const source = clientSource
-  assert.match(source, /const DOC_CONFIG_API = '\/trellis-workflow\/api\/doc-config'/)
+  assert.match(source, /const DOC_CONFIG_API = '\/dsh-trellis-sun\/api\/doc-config'/)
   assert.match(source, /action: 'read'/)
   // The draft's budget inputs travel with every preview/save so the server can
   // answer with the same numbers the prompt will use.

@@ -10,7 +10,7 @@ mode: standard   # standard | fastforward
 -
 
 ## 执行步骤
-- 重构执行步骤清单由 `task.json.steps` 唯一承载（规划期通过 `sun_trellis_task_update` 的 `steps` 参数录入），
+- 重构执行步骤清单由 `task.json.steps` 唯一承载（规划期通过 `dsh_trellis_sun_task_update` 的 `steps` 参数录入），
   每步标注 `acceptance`（量化验收标准）与 `verification`：
   - `verification: 'ai'` → 该步由模型/自动化验证（`verified: true` + `verifiedBy: 'ai'`）；
   - `verification: 'human'` → 该步必须经用户明确确认（`verifiedBy: 'human'`）才能完成，是人卡点。

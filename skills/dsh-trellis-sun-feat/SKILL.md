@@ -20,13 +20,13 @@ description: "功能特性工作流：新功能开发或重大特性改造，按
 ## 启动
 
 1. 若无 active task：加载 `dsh-trellis-sun-start`，**先征得用户同意**再建任务。建任务用内置工具
-   **`sun_trellis_task_create`**（`workType=feat`，自动写 `.trellis/tasks/<slug>/task.json`
+   **`dsh_trellis_sun_task_create`**（`workType=feat`，自动写 `.trellis/tasks/<slug>/task.json`
    （status=planning）、播种 `prd.md` 等产物模板、并**同步写 `.trellis/.runtime/sessions/`
    的 `current_task`**，面包屑/阶段/Web 徽标立即生效；不要手动写 session 文件）。
    slug 必须为 `<work-type>-<mm-dd>-<短名>`，如 `feat-01-15-xxx`；工具会自动校验/推导。
-2. 若有 active task：用 `sun_trellis_state` 或读 `.trellis/.runtime/sessions/*.json` 的
+2. 若有 active task：用 `dsh_trellis_sun_state` 或读 `.trellis/.runtime/sessions/*.json` 的
    `current_task` 恢复；也可加载 `dsh-trellis-sun-continue`。
-3. 更新阶段或状态使用内置工具 **`sun_trellis_task_update`**（如 `status=in_progress, stage=impl`；自动校验轨道并刷新 Web 徽标）：
+3. 更新阶段或状态使用内置工具 **`dsh_trellis_sun_task_update`**（如 `status=in_progress, stage=impl`；自动校验轨道并刷新 Web 徽标）：
    ```json
    "work": { "type": "feat", "mode": "standard", "stage": "prd", "execution_lane": "standard" }
    ```
@@ -68,7 +68,7 @@ epic/多交付物 → parent + child tasks（父任务管集成验收）。
 |------|-------|--------|
 | 无/空 `prd.md` | prd | 写 prd（可 `dsh-trellis-sun-brainstorm`） |
 | 有 prd；standard 且无 design 或 design.status≠approved | design | 写/改 `design.md`（聚焦需求拆解与实现方案，按 YAGNI/KISS 保持精简）**与 `spec-delta.md`**（本次改动对常驻 spec 的增量），**等人同时确认两者** |
-| design 与 spec-delta 均 approved；planning 产物齐 + 人卡通过 | 规划期用 `sun_trellis_task_update` 录入 `steps`（含验收与 `verification`）；写 `task.json.status=in_progress` | 进入 impl |
+| design 与 spec-delta 均 approved；planning 产物齐 + 人卡通过 | 规划期用 `dsh_trellis_sun_task_update` 录入 `steps`（含验收与 `verification`）；写 `task.json.status=in_progress` | 进入 impl |
 | in_progress；代码未完成 | impl | `dsh-trellis-sun-before-dev` → 按 `task.json.steps` 逐步实现（可派实现子代理） |
 | 实现完成；review 非 passed | review | **派独立子代理**按「证据型 code review」写 `review.md`；机械自修可另用 `dsh-trellis-sun-check` |
 | review 过；check 未通过 | check | 派 `dsh-trellis-sun-check`，按项目配置的规范文件与质量门验证；将结果写入 `review.md` |
@@ -121,7 +121,7 @@ review 阶段由**独立子代理**执行，按下面的证据型流程写 `revi
 
 ## 产物
 
-从 `_templates/feat/` 复制（若 task 目录不存在；`sun_trellis_task_create` 会按目录通配播种）：
+从 `_templates/feat/` 复制（若 task 目录不存在；`dsh_trellis_sun_task_create` 会按目录通配播种）：
 
 ```text
 prd.md
@@ -131,7 +131,7 @@ review.md
 ```
 
 > 执行步骤清单不设独立文件：一律由 `task.json.steps` 承载（规划期录入、执行期单步推进）。
-> 规划期写 `design.md` / `spec-delta.md` 必须走 `sun_trellis_artifact_update`（`write` 在只读守卫下不可用）。
+> 规划期写 `design.md` / `spec-delta.md` 必须走 `dsh_trellis_sun_artifact_update`（`write` 在只读守卫下不可用）。
 
 ## 子代理调度
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * trellis-workflow — one-click installer for the injection layer.
+ * dsh-trellis-sun — one-click installer for the injection layer.
  *
  * Wires a DSH profile so the plugin's injection layer actually loads:
  *
@@ -8,14 +8,14 @@
  *      `<profile>/node_modules/dsh-trellis-sun` is a junction to
  *      this package (idempotent; recreates nothing that already points here);
  *   2. config row       — ensures `cordis.patch.yml` contains the
- *      `- id: trellis-workflow` loader row with the requested config
+ *      `- id: dsh-trellis-sun` loader row with the requested config
  *      (idempotent; never overwrites an existing row);
  *   3. (optional)       — `--fix-deps` removes stale `link:` deps whose target
  *      path does not exist; `--uninstall` removes the config row, the
  *      dependency junction, and the package.json dep entries in one step.
  *
  * DSH 0.1.7 note: settings are Loader-entry driven — the Web settings form is
- * the entry's Config schema keyed by `trellis-workflow`, reached by the client
+ * the entry's Config schema keyed by `dsh-trellis-sun`, reached by the client
  * through the generated `remote.settings` namespace. No harness
  * `WEB_SETTINGS_NAMESPACES` patch is needed anymore, so this installer no
  * longer patches dsh-host-apiproxy.
@@ -24,7 +24,7 @@
  * config of a loader entry that must already exist, and that entry comes from
  * the profile's bundle list: register the package first with
  * `dsh plugin --profile <name> add <spec>`. On a profile where the entry is
- * missing the host prints `patch: entry "trellis-workflow" not found` and skips
+ * missing the host prints `patch: entry "dsh-trellis-sun" not found` and skips
  * the row, so the requested allowlist never takes effect — the installer is
  * silent about that, which is why it must be documented here. An insertion
  * would need the `- insert: [ ... ]` patch form, which this installer
@@ -33,7 +33,7 @@
  *
  * After a successful run, restart the DSH process for the profile. This package
  * ships no `postinstall` hook: installing it never wires a profile on its own,
- * so the step is explicit — run `sun-trellis-install` (this script) or
+ * so the step is explicit — run `dsh-trellis-sun-install` (this script) or
  * `node scripts/install.mjs --profile <name>`. `--auto` exists for callers that
  * want the idempotent path and quietly no-op when no profile matches; it is
  * skipped entirely when `TRELLIS_SKIP_AUTO=1`.
@@ -50,7 +50,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { ensureProjectSkills } from '../lib/skills.js'
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const PLUGIN_ID = 'trellis-workflow'
+const PLUGIN_ID = 'dsh-trellis-sun'
 const PLUGIN_NAME = 'dsh-trellis-sun'
 const PKG_IN_NM = path.join('node_modules', PLUGIN_NAME)
 
@@ -139,7 +139,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`
-trellis-workflow 注入层一键安装器
+dsh-trellis-sun 注入层一键安装器
 
 用法:
   node scripts/install.mjs [选项]
@@ -163,7 +163,7 @@ trellis-workflow 注入层一键安装器
   -h, --help            显示本帮助
 
 DSH 0.1.7 起 settings 由 Loader 条目驱动：Web 设置表单即条目 Config（命名空间为
-loader 条目 id trellis-workflow），客户端经生成的 remote.settings 命名空间读写，
+loader 条目 id dsh-trellis-sun），客户端经生成的 remote.settings 命名空间读写，
 不再需要打 harness 白名单补丁。
 
 示例:
@@ -221,7 +221,7 @@ function listProfiles(home) {
 //
 // The Web client may only read/write settings namespaces listed in
 // `WEB_SETTINGS_NAMESPACES` (dsh-host-apiproxy). This idempotent patch adds
-// `trellis-workflow` to that allowlist so the shipped settings tab works.
+// `dsh-trellis-sun` to that allowlist so the shipped settings tab works.
 // DSH updates overwrite the harness copy; re-run install to re-apply.
 // ---------------------------------------------------------------------------
 
@@ -283,14 +283,14 @@ function harnessApiProxyFiles() {
   })
 }
 
-/** Add "trellis-workflow" to WEB_SETTINGS_NAMESPACES (idempotent). */
+/** Add "dsh-trellis-sun" to WEB_SETTINGS_NAMESPACES (idempotent). */
 function patchHarnessAllowlist(dryRun) {
   const results = []
   const files = harnessApiProxyFiles()
   for (const file of files) {
     const src = fs.readFileSync(file, 'utf8')
-    if (src.includes('"trellis-workflow"')) {
-      results.push(`白名单已包含 trellis-workflow: ${file}`)
+    if (src.includes('"dsh-trellis-sun"')) {
+      results.push(`白名单已包含 dsh-trellis-sun: ${file}`)
       continue
     }
     const m = /const WEB_SETTINGS_NAMESPACES\s*=\s*\[[\s\S]*?\];/.exec(src)
@@ -306,25 +306,25 @@ function patchHarnessAllowlist(dryRun) {
     const insertAt = block.lastIndexOf(']')
     const patched =
       block.slice(0, insertAt).replace(/[ \t]*\r?\n[ \t]*$/, '') +
-      ',\n\t"trellis-workflow"\n' +
+      ',\n\t"dsh-trellis-sun"\n' +
       block.slice(insertAt)
     fs.writeFileSync(file, src.replace(block, patched))
-    results.push(`已补丁白名单（新增 trellis-workflow）: ${file}`)
+    results.push(`已补丁白名单（新增 dsh-trellis-sun）: ${file}`)
   }
   if (!files.length) {
-    results.push('未找到 dsh-host-apiproxy（检查 LOCALAPPDATA/npm-cache/_npx）；请手动把 trellis-workflow 加入 WEB_SETTINGS_NAMESPACES')
+    results.push('未找到 dsh-host-apiproxy（检查 LOCALAPPDATA/npm-cache/_npx）；请手动把 dsh-trellis-sun 加入 WEB_SETTINGS_NAMESPACES')
   }
   return results
 }
 
-/** Remove "trellis-workflow" from WEB_SETTINGS_NAMESPACES (idempotent). */
+/** Remove "dsh-trellis-sun" from WEB_SETTINGS_NAMESPACES (idempotent). */
 function unpatchHarnessAllowlist(dryRun) {
   const results = []
   const files = harnessApiProxyFiles()
   for (const file of files) {
     const src = fs.readFileSync(file, 'utf8')
-    if (!src.includes('"trellis-workflow"')) {
-      results.push(`白名单无 trellis-workflow 条目: ${file}`)
+    if (!src.includes('"dsh-trellis-sun"')) {
+      results.push(`白名单无 dsh-trellis-sun 条目: ${file}`)
       continue
     }
     if (dryRun) {
@@ -332,9 +332,9 @@ function unpatchHarnessAllowlist(dryRun) {
       continue
     }
     const out = src
-      .replace(/,\r?\n\t"trellis-workflow"\r?\n/, '\n')
-      .replace(/\t"trellis-workflow",\r?\n/, '')
-      .replace(/\t"trellis-workflow"\r?\n/, '')
+      .replace(/,\r?\n\t"dsh-trellis-sun"\r?\n/, '\n')
+      .replace(/\t"dsh-trellis-sun",\r?\n/, '')
+      .replace(/\t"dsh-trellis-sun"\r?\n/, '')
     fs.writeFileSync(file, out)
     results.push(`已移除白名单条目: ${file}`)
   }
@@ -400,7 +400,7 @@ function buildRow(args) {
   if (args.injectStep !== null) config.injectStep = args.injectStep
   if (args.skipKeywords !== null) config.skipKeywords = args.skipKeywords
   if (args.inline !== null) config.inline = args.inline
-  const lines = ['- id: trellis-workflow', `  name: '${PLUGIN_NAME}'`]
+  const lines = ['- id: dsh-trellis-sun', `  name: '${PLUGIN_NAME}'`]
   if (Object.keys(config).length) {
     lines.push('  config:')
     for (const [k, v] of Object.entries(config)) {
@@ -420,7 +420,7 @@ function buildRow(args) {
 }
 
 function hasRow(text) {
-  return /^\s*- id:\s*trellis-workflow\s*$/m.test(text)
+  return /^\s*- id:\s*dsh-trellis-sun\s*$/m.test(text)
 }
 
 function insertRow(text, row) {
@@ -480,10 +480,10 @@ function patchPatchFile(patchPath, row, dryRun) {
   const raw = fs.readFileSync(patchPath, 'utf8')
   if (hasRow(raw)) return { changed: false, message: `插件行已存在，未改动: ${patchPath}` }
   let out
-  if (/\[\s*-\s*id:\s*trellis-workflow/.test(raw)) {
+  if (/\[\s*-\s*id:\s*dsh-trellis-sun/.test(raw)) {
     // repair a broken inline write (`[- id: ...` from an older buggy version):
     // keep the header comments, drop the mangled construct, append the row.
-    const header = raw.split(/\[\s*-\s*id:\s*trellis-workflow/)[0].replace(/\s+$/, '')
+    const header = raw.split(/\[\s*-\s*id:\s*dsh-trellis-sun/)[0].replace(/\s+$/, '')
     out = (header ? header + '\n\n' : '') + row
   } else {
     out = insertRow(raw, row)
@@ -693,7 +693,7 @@ if (!fs.existsSync(profileDir)) {
   process.exit(1)
 }
 
-console.log('== trellis-workflow 注入层安装器 ==')
+console.log('== dsh-trellis-sun 注入层安装器 ==')
 console.log(`包目录:   ${PACKAGE_ROOT}`)
 console.log(`DSH_HOME: ${home}`)
 console.log(`profile:  ${profileName} (${profileDir})`)

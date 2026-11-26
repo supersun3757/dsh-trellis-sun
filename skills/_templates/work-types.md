@@ -5,18 +5,18 @@ Trellis 核心三类工作流。
 **入口**：由工作流路由表驱动，复用原生 Trellis skill（`dsh-trellis-sun-feat` / `dsh-trellis-sun-issue` / `dsh-trellis-sun-refactor`）
 **模板**：`.trellis/templates/{feat,issue,refactor}/`（首次使用时由对应技能自动初始化）
 
-> **slug 严格格式**（插件会在 breadcrumb / `sun_trellis_state` 校验并提示）：
+> **slug 严格格式**（插件会在 breadcrumb / `dsh_trellis_sun_state` 校验并提示）：
 > `<work-type>-<mm-dd>-<短名>`，如 `feat-01-15-billing-export`。`<mm-dd>` 为创建日期，
 > `<work-type>` 取自 `work.type`（feat|issue|refactor）。不合规的目录名会收到警告。
 
 ## 通用约定
 
 1. 新工作只建 Trellis task，各类产物只落 `.trellis/tasks/`。
-2. **建 task 用内置工具 `sun_trellis_task_create`**：它会写 `.trellis/tasks/<slug>/task.json`
+2. **建 task 用内置工具 `dsh_trellis_sun_task_create`**：它会写 `.trellis/tasks/<slug>/task.json`
    （status=planning）、播种产物模板，并**同步写 `.trellis/.runtime/sessions/` 的
    `current_task`**，让面包屑/阶段/Web 徽标立即生效。不要手动建目录或手写 session 文件。
-3. **更新 task 状态与阶段用内置工具 `sun_trellis_task_update`**：支持安全修改 `status`、`stage`、`mode`、`title` 与 `description`，自动校验工作流轨道并实时刷新 Web 状态徽标缓存（未指定 `slug` 时自动作用于当前会话绑定的活动任务）。
-4. `task.json` 扩展字段结构（由 `sun_trellis_task_create` / `sun_trellis_task_update` 维护，不破坏原生 status）：
+3. **更新 task 状态与阶段用内置工具 `dsh_trellis_sun_task_update`**：支持安全修改 `status`、`stage`、`mode`、`title` 与 `description`，自动校验工作流轨道并实时刷新 Web 状态徽标缓存（未指定 `slug` 时自动作用于当前会话绑定的活动任务）。
+4. `task.json` 扩展字段结构（由 `dsh_trellis_sun_task_create` / `dsh_trellis_sun_task_update` 维护，不破坏原生 status）：
    ```json
    {
      "work": {
@@ -28,7 +28,7 @@ Trellis 核心三类工作流。
    }
    ```
 5. 原生 `status` 仍只用：`planning` → `in_progress` → `completed`（archive）。
-6. **归档用内置工具 `sun_trellis_task_archive`**：把 `.trellis/tasks/<slug>/` 原子移入
+6. **归档用内置工具 `dsh_trellis_sun_task_archive`**：把 `.trellis/tasks/<slug>/` 原子移入
    `.trellis/tasks/archive/<yyyy-mm>/<slug>/`——月份键 `<yyyy-mm>` = slug 的 `mm` + 当年
    （与看板读取共用同一逻辑，写读永远一致；无 `mm-dd` 的遗留 slug 归 `other/`），并自动解绑
    指向该任务的会话指针（归档任务只读，不再可激活）。归档**只移动、不删除**记录。
@@ -37,10 +37,10 @@ Trellis 核心三类工作流。
 5. 细阶段用 `work.stage` + 产物文件恢复；**仓库产物优先于聊天历史**。
 6. 写代码前读项目配置的规范入口：有 `.trellis/doc.json` 时按 files 清单与导航阅读；无配置时按 root 默认目录读取对应规范与 `guides/`。
 7. 规划/需求澄清加载 `dsh-trellis-sun-brainstorm`；实现前 `dsh-trellis-sun-before-dev`；质量门 `dsh-trellis-sun-check`；
-   收工走原生 Trellis 生命周期（commit → `dsh-trellis-sun-finish-work` / `sun_trellis_task_archive`）；沉淀 `dsh-trellis-sun-update-spec`。
+   收工走原生 Trellis 生命周期（commit → `dsh-trellis-sun-finish-work` / `dsh_trellis_sun_task_archive`）；沉淀 `dsh-trellis-sun-update-spec`。
 8. 人卡点未通过时，禁止写 `status=in_progress`（或禁止进入写码阶段）。
 9. **slug 规范**：新任务目录名必须为 `<work-type>-<mm-dd>-<短名>`（如 `feat-01-15-billing-export`，
-   mm-dd 为创建日期）；插件每轮在 breadcrumb / `sun_trellis_state` 校验，不合规会提示。
+   mm-dd 为创建日期）；插件每轮在 breadcrumb / `dsh_trellis_sun_state` 校验，不合规会提示。
 10. **spec-delta 是「改动本身的增量」**：feat 轨道在 design 阶段与 `design.md` 一起产出、一起批准，
     归档时由 `dsh-trellis-sun-finish-work` 逐条机械合并进常驻 spec；它与 `dsh-trellis-sun-update-spec`
     沉淀的「实施教训」不是一回事，不要混用。
@@ -88,7 +88,7 @@ Trellis 核心三类工作流。
 | 新功能 / 功能改造 | `dsh-trellis-sun-feat` | 按 quick/standard 推进 prd→design→impl→review→check | `feat-<mm-dd>-...` |
 | Bug / 异常 / 回归 | `dsh-trellis-sun-issue` | 推进 report→analyze→fix→fix-note；反复调试时配合 `dsh-trellis-sun-break-loop` | `issue-<mm-dd>-...` |
 | 行为等价重构 / 拆分 / 优化 | `dsh-trellis-sun-refactor` | 推进 scan→design→apply；行为变更转 feat/issue | `refactor-<mm-dd>-...` |
-| 会话开工 / 恢复上下文 | 原生 Trellis（Active Task） | `sun_trellis_state` / `dsh-trellis-sun-continue` | — |
+| 会话开工 / 恢复上下文 | 原生 Trellis（Active Task） | `dsh_trellis_sun_state` / `dsh-trellis-sun-continue` | — |
 | 需求澄清（feat/issue 规划期） | `dsh-trellis-sun-brainstorm` | 由对应流程在规划期加载 | — |
 
 ## Feature 阶段

@@ -49,8 +49,8 @@ dispatch 参数，而是被裸调用。`test/doc-config-route.test.js` 里的 6 
 | --- | --- | --- |
 | 包名 | `@banana-peeljj12/dsh-trellis` | `dsh-trellis-sun` |
 | 内置技能（15） | `trellis-start` … `trellis-refactor` | `dsh-trellis-sun-start` … `dsh-trellis-sun-refactor` |
-| 内置工具（7） | `trellis_state`、`trellis_task_create` 等 | `sun_trellis_state`、`sun_trellis_task_create` 等 |
-| CLI | `trellis-install` | `sun-trellis-install` |
+| 内置工具（7） | `trellis_state`、`trellis_task_create` 等 | `dsh_trellis_sun_state`、`dsh_trellis_sun_task_create` 等 |
+| CLI | `trellis-install` | `dsh-trellis-sun-install` |
 | 仓库 | `1264459640/dsh-trellis` | `supersun3757/dsh-trellis-sun` |
 
 **技能前缀不只是换个名字**：`lib/skills.js` 的 `ensureProjectSkills` 在版本变化时会
@@ -60,7 +60,7 @@ dispatch 参数，而是被裸调用。`test/doc-config-route.test.js` 里的 6 
 
 **刻意不改**的部分：
 
-- loader 条目 id `trellis-workflow` —— 它同时是设置命名空间，改名会让已保存的配置失联；
+- loader 条目 id `dsh-trellis-sun` —— 它同时是设置命名空间，改名会让已保存的配置失联；
 - `.trellis/` 协议目录、`.trellis/doc.json`、`trellis:spec-index` 等 section 标记 —— 这些是和真实 Trellis 共用的协议面；
 - 任务名 `trellis-right-phase-panel`、上游 CHANGELOG / 审计文档里的历史包名与旧工具名 —— 历史记录不重写。
 

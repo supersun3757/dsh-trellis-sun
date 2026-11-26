@@ -15,7 +15,7 @@
 
 ---
 
-> **sun-Trellis fork** — this repo is forked from upstream `@banana-peeljj12/dsh-trellis` v0.5.1 and tracks DSH 0.2.2-rc.5 / Cordis 4.1.0. The package is published as `dsh-trellis-sun`; bundled skills are prefixed `dsh-trellis-sun-*` and bundled tools keep `sun_trellis_*` (public API, deliberately not renamed), so they coexist with an existing Trellis skill set instead of overwriting it. See [FORK.md](./FORK.md) for the divergence list.
+> **sun-Trellis fork** — this repo is forked from upstream `@banana-peeljj12/dsh-trellis` v0.5.1 and tracks DSH 0.2.2-rc.5 / Cordis 4.1.0. The package is published as `dsh-trellis-sun`; bundled skills are prefixed `dsh-trellis-sun-*` and bundled tools keep `dsh_trellis_sun_*` (public API, deliberately not renamed), so they coexist with an existing Trellis skill set instead of overwriting it. See [FORK.md](./FORK.md) for the divergence list.
 
 ## Overview
 
@@ -38,7 +38,7 @@ In complex, multi-turn AI coding workflows, typical pain points include:
 - **Optional Read-Only Planning**: When enabled via settings, code-writing tools (`write` / `edit`) are filtered out during planning phases, leaving only a sandboxed artifact channel for design documentation.
 - **Session-Level Isolation**: Session pointers are stored independently under `.trellis/.runtime/sessions/`, preventing multi-session or subagent race conditions.
 - **Dual-Mode Task Board (Visual Language v2)**: A compact task popover by default (active bound task pinned at the top as a hero card with an inline step checklist; open tasks grouped cleanly by status below), expanding into a full-screen board (tasks grouped by In Progress / Planning / Completed with `⌘K` search and workflow filters); the right-hand details drawer provides a **Step Tracker checklist**, stage track nodes, and an artifact file list. The board adheres to a **single-accent color system** and **restrained interaction** — it never mutates task state directly; the only advance path is the **Advance Task** button injecting an instruction into the composer for the Agent to execute, and artifact clicks produce native `@.trellis/tasks/...` file references handled by DSH.
-- **Git Cleanliness Check (scoped mode supported)**: Automatically verifies that the Git working tree is clean and committed before closing or archiving a task. When the working tree contains uncommitted changes unrelated to the current task, pass the task's actual changed files via `modified_files` to `sun_trellis_task_update` / `sun_trellis_task_archive`: the check then scopes to those files (which must themselves be committed), and uncommitted changes outside the list only emit a warning instead of blocking. Omitting the parameter keeps the global strict check.
+- **Git Cleanliness Check (scoped mode supported)**: Automatically verifies that the Git working tree is clean and committed before closing or archiving a task. When the working tree contains uncommitted changes unrelated to the current task, pass the task's actual changed files via `modified_files` to `dsh_trellis_sun_task_update` / `dsh_trellis_sun_task_archive`: the check then scopes to those files (which must themselves be committed), and uncommitted changes outside the list only emit a warning instead of blocking. Omitting the parameter keeps the global strict check.
 
 ---
 
@@ -125,7 +125,7 @@ The `steps` array in `task.json` serves as the execution list and supports 5 sta
 - `completed`: Verified and closed.
 
 #### Verification Modes:
-- **Automated Verification (`verification: 'ai'`)**: The model must run test commands and record `verified: true` with `verificationNotes` evidence via `sun_trellis_task_update` in an initial call before the step can be marked `completed` in a subsequent call.
+- **Automated Verification (`verification: 'ai'`)**: The model must run test commands and record `verified: true` with `verificationNotes` evidence via `dsh_trellis_sun_task_update` in an initial call before the step can be marked `completed` in a subsequent call.
 - **Human Approval Gate (`verification: 'human'`)**: Reserved for critical or high-risk changes. The step cannot be marked `completed` unless confirmed by the user and saved with `verifiedBy: 'human'`.
 - **Completion Audit**: When closing or archiving a task, the plugin validates that all steps are completed and verified, and that the Git working tree is clean.
 
@@ -159,11 +159,11 @@ When `enforceReadonlyPlanning: true` is configured, the plugin TRIMS ONLY the sp
 
 | Authorization State | Condition | Trimmed Tools | Description |
 |---|---|---|---|
-| `undecided` | In allowlist, no active task, not skipped | `write` / `edit` + `sun_trellis_task_update` / `sun_trellis_artifact_update` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | Removes code-write and task-write tools to avoid blindly rewriting source; `sun_trellis_task_create` / `sun_trellis_task_skip` and all other tools (including other plugins') are kept |
-| `planning` | Task is in planning stages (`prd`, `design`, `scan`, `report`) | `write` / `edit` + `sun_trellis_task_create` / `sun_trellis_task_skip` / `sun_trellis_task_archive` / `sun_trellis_ui_update` | Removes generic `write` / `edit` tools and task-lifecycle tools; deliverables can only be updated through the artifact tool; `sun_trellis_task_update` / `sun_trellis_artifact_update` and all other tools are kept |
+| `undecided` | In allowlist, no active task, not skipped | `write` / `edit` + `dsh_trellis_sun_task_update` / `dsh_trellis_sun_artifact_update` / `dsh_trellis_sun_task_archive` / `dsh_trellis_sun_ui_update` | Removes code-write and task-write tools to avoid blindly rewriting source; `dsh_trellis_sun_task_create` / `dsh_trellis_sun_task_skip` and all other tools (including other plugins') are kept |
+| `planning` | Task is in planning stages (`prd`, `design`, `scan`, `report`) | `write` / `edit` + `dsh_trellis_sun_task_create` / `dsh_trellis_sun_task_skip` / `dsh_trellis_sun_task_archive` / `dsh_trellis_sun_ui_update` | Removes generic `write` / `edit` tools and task-lifecycle tools; deliverables can only be updated through the artifact tool; `dsh_trellis_sun_task_update` / `dsh_trellis_sun_artifact_update` and all other tools are kept |
 | `authorized` | Task is in implementation stages (`impl`, `fix`, `apply`) or skipped | None (no trimming) | Restores the full tool surface |
 
-> Note: `sun_trellis_artifact_update` only permits writing whitelisted documentation inside the active task directory (`.trellis/tasks/<slug>/`), preventing path traversal.
+> Note: `dsh_trellis_sun_artifact_update` only permits writing whitelisted documentation inside the active task directory (`.trellis/tasks/<slug>/`), preventing path traversal.
 
 ---
 
@@ -171,13 +171,13 @@ When `enforceReadonlyPlanning: true` is configured, the plugin TRIMS ONLY the sp
 
 The plugin registers the following specialized tools:
 
-- **`sun_trellis_task_create`**: Creates a new task with initial `task.json`, seeds templates, and binds to the current session.
-- **`sun_trellis_task_update`**: Advances task stages, updates step progress, records verification evidence, or modifies task metadata without changing the current session binding. An explicit `slug` selects only the update target; use the board's activate button to switch tasks.
-- **`sun_trellis_artifact_update`**: Safely updates task planning documents (such as `prd.md`, `design.md`, `check.md`), restricted by path and filename whitelists.
-- **`sun_trellis_task_archive`**: Archives a completed task to `.trellis/tasks/archive/YYYY-MM/` and unbinds the session.
-- **`sun_trellis_task_skip`**: Skips the Trellis workflow for the active session upon user approval, unlocking write tools.
-- **`sun_trellis_state`**: Inspects and reports Trellis runtime state and task information for the current workspace.
-- **`sun_trellis_ui_update`**: Manually refreshes the web header phase chip.
+- **`dsh_trellis_sun_task_create`**: Creates a new task with initial `task.json`, seeds templates, and binds to the current session.
+- **`dsh_trellis_sun_task_update`**: Advances task stages, updates step progress, records verification evidence, or modifies task metadata without changing the current session binding. An explicit `slug` selects only the update target; use the board's activate button to switch tasks.
+- **`dsh_trellis_sun_artifact_update`**: Safely updates task planning documents (such as `prd.md`, `design.md`, `check.md`), restricted by path and filename whitelists.
+- **`dsh_trellis_sun_task_archive`**: Archives a completed task to `.trellis/tasks/archive/YYYY-MM/` and unbinds the session.
+- **`dsh_trellis_sun_task_skip`**: Skips the Trellis workflow for the active session upon user approval, unlocking write tools.
+- **`dsh_trellis_sun_state`**: Inspects and reports Trellis runtime state and task information for the current workspace.
+- **`dsh_trellis_sun_ui_update`**: Manually refreshes the web header phase chip.
 
 ---
 

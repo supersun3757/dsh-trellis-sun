@@ -110,7 +110,7 @@ test('the schema is exposed at runtime.Config, which dsh-settings reads', async 
 test('host plugin mounts on a real cordis context and registers its tools', async () => {
   const { registered } = await mountPlugin()
   assert.ok(registered.length > 0, 'no tools were registered — apply likely threw')
-  for (const name of ['sun_trellis_state', 'sun_trellis_task_create', 'sun_trellis_task_update', 'sun_trellis_task_archive']) {
+  for (const name of ['dsh_trellis_sun_state', 'dsh_trellis_sun_task_create', 'dsh_trellis_sun_task_update', 'dsh_trellis_sun_task_archive']) {
     assert.ok(registered.includes(name), `missing tool ${name} (registered: ${registered.join(', ')})`)
   }
 })
@@ -151,8 +151,8 @@ test('the mounted plugin exposes a working effective config', async () => {
   root.plugin(plugin, { allowlist: ['F:/proj'] })
   await new Promise((resolve) => setTimeout(resolve, 250))
 
-  const stateTool = tools.get('sun_trellis_state')
-  assert.ok(stateTool, 'sun_trellis_state was not registered')
+  const stateTool = tools.get('dsh_trellis_sun_state')
+  assert.ok(stateTool, 'dsh_trellis_sun_state was not registered')
 
   const value = await stateTool.execute(
     { cwd: 'F:/proj/sub' },
@@ -164,9 +164,9 @@ test('the mounted plugin exposes a working effective config', async () => {
 
 /**
  * The seam that only shows up through the model-facing surface: a feat task is
- * created by the `sun_trellis_task_create` tool, the planning window masks
+ * created by the `dsh_trellis_sun_task_create` tool, the planning window masks
  * `write`, and the seeded `spec-delta.md` is then authored through
- * `sun_trellis_artifact_update` — the only channel the model has in planning.
+ * `dsh_trellis_sun_artifact_update` — the only channel the model has in planning.
  */
 test('the mounted tools carry a feat task through spec-delta authoring', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'trellis-mount-seam-'))
@@ -189,8 +189,8 @@ test('the mounted tools carry a feat task through spec-delta authoring', async (
     const exec = { agent: { session: { id: 'seam-session', header: { cwd: dir } } } }
     const slug = 'feat-11-25-mount-seam'
 
-    const createTool = tools.get('sun_trellis_task_create')
-    assert.ok(createTool, 'sun_trellis_task_create was not registered')
+    const createTool = tools.get('dsh_trellis_sun_task_create')
+    assert.ok(createTool, 'dsh_trellis_sun_task_create was not registered')
     const created = await createTool.execute({ cwd: dir, workType: 'feat', title: 'Mount seam', slug }, exec)
     assert.equal(created.ok, true, `create failed: ${created.error}`)
     assert.ok(created.seeded.includes('spec-delta.md'), `seeded: ${created.seeded.join(', ')}`)
@@ -199,8 +199,8 @@ test('the mounted tools carry a feat task through spec-delta authoring', async (
     const deltaPath = path.join(dir, '.trellis', 'tasks', slug, 'spec-delta.md')
     assert.equal(existsSync(deltaPath), true, 'spec-delta.md was not seeded into the task dir')
 
-    const artifactTool = tools.get('sun_trellis_artifact_update')
-    assert.ok(artifactTool, 'sun_trellis_artifact_update was not registered')
+    const artifactTool = tools.get('dsh_trellis_sun_artifact_update')
+    assert.ok(artifactTool, 'dsh_trellis_sun_artifact_update was not registered')
     const written = await artifactTool.execute(
       {
         cwd: dir,

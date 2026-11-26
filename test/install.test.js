@@ -69,7 +69,7 @@ test('buildRow escapes double quotes instead of closing the scalar early', () =>
 test('buildRow leaves forward-slash paths, numbers and booleans intact', () => {
   const row = rowFor({ allowlist: ['F:/Projects/FordProject'], injectStep: 0, inline: false })
 
-  assert.match(row, /^- id: trellis-workflow$/m)
+  assert.match(row, /^- id: dsh-trellis-sun$/m)
   assert.match(row, /^ {2}name: 'dsh-trellis-sun'$/m)
   assert.match(row, /^ {4}injectStep: 0$/m)
   assert.match(row, /^ {4}inline: false$/m)
@@ -79,7 +79,7 @@ test('buildRow leaves forward-slash paths, numbers and booleans intact', () => {
 test('buildRow omits config keys that were not supplied', () => {
   const row = rowFor()
   assert.doesNotMatch(row, /config:/, 'an empty config must not emit a dangling block')
-  assert.match(row, /^- id: trellis-workflow$/m)
+  assert.match(row, /^- id: dsh-trellis-sun$/m)
 })
 
 // ---------------------------------------------------------------------------

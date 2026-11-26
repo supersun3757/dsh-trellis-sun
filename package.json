@@ -24,7 +24,7 @@
     }
   },
   "bin": {
-    "sun-trellis-install": "./scripts/install.mjs"
+    "dsh-trellis-sun-install": "./scripts/install.mjs"
   },
   "scripts": {
     "test": "node --test",

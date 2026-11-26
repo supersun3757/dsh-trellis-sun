@@ -32,14 +32,14 @@ description: "收尾已完成或已归档的 Trellis 任务：确认 Git 工作�
 | 步骤 | 操作目标 | 具体动作 / 工具 | 重点要求与注意事项 |
 |---|---|---|---|
 | 1. 提交业务代码 | 提交业务实现 | `git commit` 提交业务实现与测试文件 | 先提交业务代码；**除非用户明确要求，否则绝不擅自执行 `git push`** |
-| 2. 标记任务完成 | 标记完成 | 调 `sun_trellis_task_update({ status: 'completed' })` | 工具会执行严格的 Git 干净度硬门禁检查 |
-| 3. 安全归档任务 | 归档持久化 | **征得用户同意后**，调 `sun_trellis_task_archive({ slug: '...' })` | 自动移动到 `.trellis/tasks/archive/<yyyy-mm>/<slug>/` 并解绑会话指针 |
+| 2. 标记任务完成 | 标记完成 | 调 `dsh_trellis_sun_task_update({ status: 'completed' })` | 工具会执行严格的 Git 干净度硬门禁检查 |
+| 3. 安全归档任务 | 归档持久化 | **征得用户同意后**，调 `dsh_trellis_sun_task_archive({ slug: '...' })` | 自动移动到 `.trellis/tasks/archive/<yyyy-mm>/<slug>/` 并解绑会话指针 |
 | 4. 沉淀研发日志 | 追加月报 | 在 `.trellis/journal/<yyyy-mm>.md` 追加本次交付摘要 | 更新任务索引，记录本次交付的业务价值与关键改动点 |
 | 5. 完结汇报 | 告知用户 | 向用户明确指出归档记录与代码提交的落脚点 | 告知任务已成功收口 |
 
 ## 作用域放宽机制（Scoped relaxation）
 
-`sun_trellis_task_update(status: 'completed')` 与 `sun_trellis_task_archive` 内置了严格的 Git 干净度门禁。
+`dsh_trellis_sun_task_update(status: 'completed')` 与 `dsh_trellis_sun_task_archive` 内置了严格的 Git 干净度门禁。
 - 若工作区存在与当前任务无关的未提交改动（如并行任务、临时实验文件），可在调用工具时通过 **`modified_files`** 参数传入本任务实际涉及的文件列表。
 - 门禁将只校验这些声明的文件是否干净提交，允许列表外的改动以告警形式通过。
 

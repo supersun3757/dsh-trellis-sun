@@ -22,11 +22,11 @@ Bug 修复流程，载体为 Trellis task。
 
 ## 启动
 
-1. **恢复上下文**：用 `sun_trellis_state` 或读取 `.trellis/.runtime/sessions/*.json` 的 `current_task`；也可加载 `dsh-trellis-sun-continue`。
-2. **无 task 且用户同意**：加载 `dsh-trellis-sun-start` $\to$ 用内置工具 **`sun_trellis_task_create`** 创建任务：
+1. **恢复上下文**：用 `dsh_trellis_sun_state` 或读取 `.trellis/.runtime/sessions/*.json` 的 `current_task`；也可加载 `dsh-trellis-sun-continue`。
+2. **无 task 且用户同意**：加载 `dsh-trellis-sun-start` $\to$ 用内置工具 **`dsh_trellis_sun_task_create`** 创建任务：
    - 参数：`workType=issue`，自动写入 `.trellis/tasks/<slug>/task.json`（status=planning）、播种 `report.md` 等模板，并同步写入 `.trellis/.runtime/sessions/` 的 `current_task`，面板状态与 Web 徽标立即生效；
    - slug 格式严格为 `issue-<mm-dd>-<短名>`，由工具自动推导校验。
-3. **状态与阶段更新**：使用内置工具 **`sun_trellis_task_update`**（如 `status="in_progress", stage="fix"`；自动校验轨道并刷新状态）：
+3. **状态与阶段更新**：使用内置工具 **`dsh_trellis_sun_task_update`**（如 `status="in_progress", stage="fix"`；自动校验轨道并刷新状态）：
    ```json
    "work": { "type": "issue", "mode": "standard", "stage": "report" }
    ```
@@ -49,7 +49,7 @@ Bug 修复流程，载体为 Trellis task。
 |---|---|---|---|
 | 无 `report.md`（或未写清复现） | report | 编写 `report.md`：错误现象、稳定复现步骤、期望表现、实际表现、日志证据 | analyze 或 fix |
 | 有 report；根因不显然且无 analysis | analyze | 编写 `analysis.md`：建立单命令跑红闭环，产出可证伪假说，顺着数据流深查根本原因 | 确认根因后进 fix |
-| 根因已确认且有跑红命令 | report/analyze | 确认修复思路；调 `sun_trellis_task_update(status: 'in_progress')` | fix |
+| 根因已确认且有跑红命令 | report/analyze | 确认修复思路；调 `dsh_trellis_sun_task_update(status: 'in_progress')` | fix |
 | in_progress；修复未完成 | fix | 加载 `dsh-trellis-sun-before-dev` $\to$ 遵循最小改动原则修复根因，跑绿复现命令 | fix-note |
 | 修复完成 | fix-note | 编写 `fix-note.md`：记录具体改动、验证证据（单测/抓包）与技术债务 | finish |
 | fix-note 齐备 | finish | 加载 `dsh-trellis-sun-check` 验证 $\to$ 必要时 `dsh-trellis-sun-update-spec` $\to$ commit $\to$ `dsh-trellis-sun-finish-work` / archive | 完成 |

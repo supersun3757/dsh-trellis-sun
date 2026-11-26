@@ -2,7 +2,7 @@
  * Seam test for the feat `spec-delta` track (issue #1).
  *
  * The delta is authored **inside the read-only planning window**, where the
- * generic `write` tool is masked and `sun_trellis_artifact_update` is the only
+ * generic `write` tool is masked and `dsh_trellis_sun_artifact_update` is the only
  * writable channel. This test pins the three seams that make that work:
  *
  *   1. authorization: planning trims `write` but keeps the artifact tool;
@@ -59,7 +59,7 @@ test('seam 1 — planning keeps the artifact channel open and closes write', () 
   const deny = restrictDenyFor('planning')
   assert.ok(deny.includes('write'), 'planning must deny write')
   assert.ok(deny.includes('edit'), 'planning must deny edit')
-  assert.ok(!deny.includes('sun_trellis_artifact_update'), 'planning must keep the artifact tool')
+  assert.ok(!deny.includes('dsh_trellis_sun_artifact_update'), 'planning must keep the artifact tool')
   assert.ok(PLANNING_TRIM instanceof Set)
   assert.ok(ALLOWED_ARTIFACTS.has('spec-delta.md'), 'the artifact whitelist must accept spec-delta.md')
 })

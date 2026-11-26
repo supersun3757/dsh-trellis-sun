@@ -1,4 +1,4 @@
-# trellis-workflow / task-engine — 质量检查与约定
+# dsh-trellis-sun / task-engine — 质量检查与约定
 
 > 本文件由 `feat` 任务 `feat-09-05-native-steps-guard`（原生执行步骤、验证门禁与规划期产物写入保护）沉淀。
 > 证据：任务规划产物（prd/design/design-review/implement/review）与本包 `lib/` 源码（task.js / artifact.js / breadcrumb.js / index.js）。
@@ -27,7 +27,7 @@
      （`[trellis/steps_unverified]`，含 `'human'` 未确认）均拒绝；
    - 布尔字段必须严格类型校验（`typeof === 'boolean'`），`Boolean()` 会把字符串 `"false"`
      强制转成 `true`，是历史旁路点。
-3. **产物写入走专属受控工具 `sun_trellis_artifact_update`**：
+3. **产物写入走专属受控工具 `dsh_trellis_sun_artifact_update`**：
    - 只允许写入当前任务目录 `.trellis/tasks/<slug>/` 下的标准交付文档（全工种白名单，见
      `lib/artifact.js` `ALLOWED_ARTIFACTS`），禁止触碰项目源码；
    - **白名单保留已废弃模板名（兼容历史任务）**：`implement.md` / `checklist.yaml` 虽已从模板体系
@@ -42,19 +42,19 @@
      issue report/analyze；refactor scan/design；in_progress ↔ feat impl/review/check；issue fix/fix-note；
      refactor apply。`completed` 状态恒胜（展示终态）。未知/遗留 stage 回退到基于 status 的粗粒度相位。
    - 三态授权（`lib/readonly.js` `authorizationOf`）：`undecided`（无任务且未跳过）→
-     仅裁剪 `write`/`edit` + 任务写工具（`sun_trellis_task_update` / `sun_trellis_artifact_update` /
-     `sun_trellis_task_archive` / `sun_trellis_ui_update`），`sun_trellis_state` / `sun_trellis_task_create` /
-     `sun_trellis_task_skip` 与其余工具（含其他插件工具）保留；`planning`（规划型阶段）→
-     仅裁剪 `write`/`edit` + 任务生命周期工具（`sun_trellis_task_create` / `sun_trellis_task_skip` /
-     `sun_trellis_task_archive` / `sun_trellis_ui_update`），`sun_trellis_state` / `sun_trellis_task_update` /
-     `sun_trellis_artifact_update` 与其余工具保留；`authorized`（写码阶段 / completed / 已跳过）→
+     仅裁剪 `write`/`edit` + 任务写工具（`dsh_trellis_sun_task_update` / `dsh_trellis_sun_artifact_update` /
+     `dsh_trellis_sun_task_archive` / `dsh_trellis_sun_ui_update`），`dsh_trellis_sun_state` / `dsh_trellis_sun_task_create` /
+     `dsh_trellis_sun_task_skip` 与其余工具（含其他插件工具）保留；`planning`（规划型阶段）→
+     仅裁剪 `write`/`edit` + 任务生命周期工具（`dsh_trellis_sun_task_create` / `dsh_trellis_sun_task_skip` /
+     `dsh_trellis_sun_task_archive` / `dsh_trellis_sun_ui_update`），`dsh_trellis_sun_state` / `dsh_trellis_sun_task_update` /
+     `dsh_trellis_sun_artifact_update` 与其余工具保留；`authorized`（写码阶段 / completed / 已跳过）→
      完整工具面（不裁剪）。裁剪是 **denylist**（只移除指定工具），不是 allowlist——
      其他插件注册的工具（web_search、generate_image、subagent、skill 等）绝不能被连带裁剪
      （issue-09-07-trim-tools-denylist）。经 `system-prompt/assemble` 按会话 cwd 命中 allowlist
      后物理裁剪工具 Schema。
-   - **写路径必须拒绝状态漂移**：`sun_trellis_task_create` / `sun_trellis_task_update` 校验合并后的
+   - **写路径必须拒绝状态漂移**：`dsh_trellis_sun_task_create` / `dsh_trellis_sun_task_update` 校验合并后的
      status↔stage，拒绝「规划型阶段 + `status=in_progress`」（`lib/task.js`），保证只读窗口不被
-     模型纪律失误打开；`write`/`edit` 从规划期工具面剔除，但 `sun_trellis_artifact_update` 必须保留
+     模型纪律失误打开；`write`/`edit` 从规划期工具面剔除，但 `dsh_trellis_sun_artifact_update` 必须保留
      为唯一写通道，否则规划期"想写方案却无工具"会死锁。
    - **只读语义双通道：工具面裁剪 + 显式指令文本注入**（feat-09-07-inject-readonly-prompt）：
      除了 denylist 裁剪，`system-prompt/assemble` 处理器在 `undecided`/`planning` 时还会向
@@ -135,7 +135,7 @@
   `exec.agent.session.id`，底层任务函数常用 `exec.sessionId`。产物默认目标解析必须兼容宿主形态，
   否则会把“有当前会话”误当作“无会话”，回退 canonical 指针并覆盖旧任务。回归测试应通过真实
   注册工具调用，构造 canonical 旧任务与当前会话新任务并存，断言返回 slug、实际文件及绑定均正确。
-- `sun_trellis_artifact_update` 的默认 slug 跟随**会话绑定任务**，不一定是本次正在推进的任务
+- `dsh_trellis_sun_artifact_update` 的默认 slug 跟随**会话绑定任务**，不一定是本次正在推进的任务
   （证据：feat-09-07 曾把 design.md 误写入绑定任务 trellis-right-phase-panel，靠 `git checkout`
   还原）。写产物时若会话绑定任务 ≠ 目标任务，必须显式传 `slug`，否则会污染其他任务目录。
 

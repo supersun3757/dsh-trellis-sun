@@ -28,7 +28,7 @@ execution_lane: standard   # quick | standard
 ## 验证计划
 - 每项验收标准对应的**可执行验证命令**（编译/测试/运行入口，按项目配置的规范文件与质量门）：
   1. 
-- 若存在需要独立测试验证的步骤，请在任务步骤清单（`sun_trellis_task_update` 的 `steps`/`step`）中
+- 若存在需要独立测试验证的步骤，请在任务步骤清单（`dsh_trellis_sun_task_update` 的 `steps`/`step`）中
   标注 `verification: 'ai'`；若存在需要人工验收的步骤，标注 `verification: 'human'`。
 - 验证证据在 `dsh-trellis-sun-check` 阶段记录；涉及产物验收的改动**必须**提供验证证据，否则不得进入
   code review。

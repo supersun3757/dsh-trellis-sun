@@ -10,7 +10,7 @@ status: draft   # draft | approved（与 design.md 同一套批准标记，owner
 > - 目标文件必须是 `.trellis/doc.json` 的 `files` 列表里的文件，或 `$root` 文档下的文件；不要指向任务目录内的产物。
 > - `MODIFIED` / `REMOVED` 的旧文本必须与目标文件**当前内容逐字一致**（含空白与标点）。
 > - 无增量时不要留空：写「无增量：<原因>」，并同样走批准。
-> - 规划期写入本文件必须走 `sun_trellis_artifact_update`（`write` 在只读守卫下不可用）。
+> - 规划期写入本文件必须走 `dsh_trellis_sun_artifact_update`（`write` 在只读守卫下不可用）。
 
 ## ADDED
 

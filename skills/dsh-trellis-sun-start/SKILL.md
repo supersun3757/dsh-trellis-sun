@@ -12,17 +12,17 @@ description: "启动 Trellis 工作流：对用户诉求进行分类，在创建
 | 用户诉求类型 | 典型场景 | 推荐轨道 / 动作 | 处理原则 |
 |---|---|---|---|
 | 普通问答 / 查代码 | "这函数在哪调用的"、"解释下这段逻辑" | 直接回答 | **绝不碰 Trellis，不建任务** |
-| 一次性免任务快修 | "改个注释"、"免任务直接改" | 调 `sun_trellis_task_skip` | 征得同意后跳过任务只读保护直接改 |
+| 一次性免任务快修 | "改个注释"、"免任务直接改" | 调 `dsh_trellis_sun_task_skip` | 征得同意后跳过任务只读保护直接改 |
 | 新功能 / 业务变动 | "开发用户登录功能"、"接入微信支付" | `feat` 轨道 | 询问用户是否创建 `feat` 任务并进入规划 |
 | Bug / 缺陷修复 | "保存报错 500"、"列表加载不出来" | `issue` 轨道 | 询问用户是否创建 `issue` 任务并进入排查 |
 | 内部代码优化 | "拆分 2000 行文件"、"提取通用模块" | `refactor` 轨道 | 询问用户是否创建 `refactor` 任务并进入设计 |
 
 ## 建任务规则与工具调用
 
-建任务**必须且只能通过内置工具 `sun_trellis_task_create`**：
+建任务**必须且只能通过内置工具 `dsh_trellis_sun_task_create`**：
 
 ```json
-sun_trellis_task_create({
+dsh_trellis_sun_task_create({
   "workType": "feat | issue | refactor",
   "title": "任务标题（如：支持微信支付接入）",
   "name": "简短英文名（如：wechat-pay）",

@@ -117,8 +117,8 @@ v0.3.5 记录过两个 id 体系：席位 key 用 patch 的**裸 id**，而配�
 用真实 `0.2.0-rc.2` + `cordis 4.0.4`、裸 `Context` 与 stub 服务挂载 `lib/index.js`：
 
 - 插件正常挂载，无激活错误；`mounted; allowlist=[...]` 正常打印。
-- 7 个工具全部注册：`sun_trellis_state`、`sun_trellis_task_create`、`sun_trellis_task_skip`、`sun_trellis_task_update`、`sun_trellis_task_archive`、`sun_trellis_artifact_update`、`sun_trellis_ui_update`。
-- `webServer.register` 被调用（`prefix:/trellis-workflow/api`）。
+- 7 个工具全部注册：`dsh_trellis_sun_state`、`dsh_trellis_sun_task_create`、`dsh_trellis_sun_task_skip`、`dsh_trellis_sun_task_update`、`dsh_trellis_sun_task_archive`、`dsh_trellis_sun_artifact_update`、`dsh_trellis_sun_ui_update`。
+- `webServer.register` 被调用（`prefix:/dsh-trellis-sun/api`）。
 - `agent/pre-step` 瀑布实跑：**breadcrumb 真的注入了**（消息数 1 → 2，`user` 角色，内容以 `[trellis/no_task] Workflow state (...)` 开头），`decision.messages.toSpliced` 插入路径可用。
 - 置 `fs.sandboxMode = 'workspace-write'` 后：`policy.resolve` 收到的参数恰为 `{ session }`，解析结果作为 `writeText` 第 5 参透传（实测 26 次调用来自技能置备）⇒ `ctx.get('sandboxPolicy') → resolve({session}) → writeText` 全链路打通。
 
@@ -134,12 +134,12 @@ v0.3.5 记录过两个 id 体系：席位 key 用 patch 的**裸 id**，而配�
 |---|---|
 | 兼容性声明是决定性变量 | 同一真实 CLI、同一命令，仅 peer 范围不同：`^0.2.0-rc.2` 通过（exit 0），`^0.1.7-rc.1` 被拒（`installation rejected` + `nothing was installed`） |
 | 插件在真实 host 中加载 | 无 activation 错误；6 个 `trellis_*` 工具注册；`apply()` 执行到末句 |
-| `sun_trellis_state` 真实代码路径 | fixture 返回 `matched=true / phase=planning / activeTask=.trellis/tasks/feat-01-15-demo / slugValid=true`；allowlist 外返回 `source=outside-allowlist` |
+| `dsh_trellis_sun_state` 真实代码路径 | fixture 返回 `matched=true / phase=planning / activeTask=.trellis/tasks/feat-01-15-demo / slugValid=true`；allowlist 外返回 `source=outside-allowlist` |
 | **`enforceReadonlyPlanning` 工具面裁剪**（审计中最薄的环节） | 在**真实 undecided / planning / authorized / skipped** 相位下实测：`write`/`edit` 与对应 trellis 工具被裁、其它插件工具（`web_search`、`read`）保留、只读提示段按相位增删、breadcrumb 每相位恰好 1 条 —— 21/21 PASS |
 | 配置表单与 volatile 字段 | `describe()` 收录该条目（`applies: "live"`），4 个 schema 默认值全部行为化验证（`injectStep=1` 只注入第 1 步、`inline=false` → `planning`、`skipKeywords` 按词匹配等） |
 | 写路径 | `ctx.fs.writeText`（5 参含 sandboxPolicy）往返成功；`task_create → task_update → artifact_update → git 门禁 → completed → archive → task_skip` 端到端全部可用 |
 | skills 置备 | 15 个技能目录 + `_templates` 全量真实落盘，废弃模板被自愈修剪 |
-| Web API | 外部可观测面为**1 次 `prefix` 路由注册**（`/trellis-workflow/api`）+ handler 内 **3 条子路径**（`task-state` / `board` / `bind`）；真实 HTTP 实测 200，且 404 / 405 / 403（跨站与非同源 Origin）/ 400（畸形 JSON）均按设计 |
+| Web API | 外部可观测面为**1 次 `prefix` 路由注册**（`/dsh-trellis-sun/api`）+ handler 内 **3 条子路径**（`task-state` / `board` / `bind`）；真实 HTTP 实测 200，且 404 / 405 / 403（跨站与非同源 Origin）/ 400（畸形 JSON）均按设计 |
 | 反例与降级 | 空 allowlist、无 config 块、畸形 config（该条目不激活但宿主其余部分照常启动）、allowlist 外 cwd、损坏 session/task JSON、3 MB task.json、多会话并发绑定、缺失 `webServer`、9 项非法工具参数 —— 全部为结构化拒绝或优雅降级，无一抛入回合 |
 
 ### 6.2 仍需真实 GUI 或真实 LLM 回合（当前未验证）

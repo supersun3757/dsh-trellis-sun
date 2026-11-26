@@ -11,7 +11,7 @@ description: "恢复已暂停或已归档的 Trellis 会话：根据活跃任务
 
 1. **识别当前活跃任务**：
    - 查阅项目运行时会话状态文件 `.trellis/.runtime/sessions/*.json` 获取 `current_task` 路径；
-   - 或直接调用内置工具 `sun_trellis_state` 获取当前活跃任务 slug。
+   - 或直接调用内置工具 `dsh_trellis_sun_state` 获取当前活跃任务 slug。
 2. **推导当前所处阶段 (Phase) 与下一步**：
    - 打开任务元数据文件 `.trellis/tasks/<slug>/task.json` 查看 `work.type`、`status`、`work.stage` 及当前文件。
    - 对照下表精准衔接下一步动作：

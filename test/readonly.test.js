@@ -20,11 +20,11 @@ const FULL = [
   { name: 'write' },
   { name: 'edit' },
   { name: 'pwsh' },
-  { name: 'sun_trellis_state' },
-  { name: 'sun_trellis_task_create' },
-  { name: 'sun_trellis_task_skip' },
-  { name: 'sun_trellis_task_update' },
-  { name: 'sun_trellis_artifact_update' },
+  { name: 'dsh_trellis_sun_state' },
+  { name: 'dsh_trellis_sun_task_create' },
+  { name: 'dsh_trellis_sun_task_skip' },
+  { name: 'dsh_trellis_sun_task_update' },
+  { name: 'dsh_trellis_sun_artifact_update' },
   { name: 'skill' },
   { name: 'web_search' },
   { name: 'generate_image' },
@@ -55,13 +55,13 @@ test('undecided trims write/edit and task-write trellis tools, keeps everything 
   assert.ok(trimmed)
   assert.ok(trimmed.has('write'))
   assert.ok(trimmed.has('edit'))
-  assert.ok(trimmed.has('sun_trellis_artifact_update'))
-  assert.ok(trimmed.has('sun_trellis_task_update'))
-  assert.ok(trimmed.has('sun_trellis_task_archive'))
+  assert.ok(trimmed.has('dsh_trellis_sun_artifact_update'))
+  assert.ok(trimmed.has('dsh_trellis_sun_task_update'))
+  assert.ok(trimmed.has('dsh_trellis_sun_task_archive'))
   assert.ok(!trimmed.has('read'))
-  assert.ok(!trimmed.has('sun_trellis_state'))
-  assert.ok(!trimmed.has('sun_trellis_task_create'))
-  assert.ok(!trimmed.has('sun_trellis_task_skip'))
+  assert.ok(!trimmed.has('dsh_trellis_sun_state'))
+  assert.ok(!trimmed.has('dsh_trellis_sun_task_create'))
+  assert.ok(!trimmed.has('dsh_trellis_sun_task_skip'))
   assert.ok(!trimmed.has('skill'))
   assert.ok(!trimmed.has('web_search'))
 })
@@ -71,11 +71,11 @@ test('planning trims write/edit and lifecycle trellis tools, keeps artifact chan
   assert.ok(trimmed)
   assert.ok(trimmed.has('write'))
   assert.ok(trimmed.has('edit'))
-  assert.ok(trimmed.has('sun_trellis_task_create'))
-  assert.ok(trimmed.has('sun_trellis_task_skip'))
-  assert.ok(trimmed.has('sun_trellis_task_archive'))
-  assert.ok(!trimmed.has('sun_trellis_artifact_update'))
-  assert.ok(!trimmed.has('sun_trellis_task_update'))
+  assert.ok(trimmed.has('dsh_trellis_sun_task_create'))
+  assert.ok(trimmed.has('dsh_trellis_sun_task_skip'))
+  assert.ok(trimmed.has('dsh_trellis_sun_task_archive'))
+  assert.ok(!trimmed.has('dsh_trellis_sun_artifact_update'))
+  assert.ok(!trimmed.has('dsh_trellis_sun_task_update'))
   assert.ok(!trimmed.has('read'))
   assert.ok(!trimmed.has('skill'))
   assert.ok(!trimmed.has('web_search'))
@@ -90,17 +90,17 @@ test('applyReadonlyPolicy trims only the denylist tools for undecided, keeps oth
   assert.ok(pruned)
   const kept = names(pruned)
   assert.ok(kept.includes('read'))
-  assert.ok(kept.includes('sun_trellis_task_create'))
-  assert.ok(kept.includes('sun_trellis_task_skip'))
-  assert.ok(kept.includes('sun_trellis_state'))
+  assert.ok(kept.includes('dsh_trellis_sun_task_create'))
+  assert.ok(kept.includes('dsh_trellis_sun_task_skip'))
+  assert.ok(kept.includes('dsh_trellis_sun_state'))
   // other plugins' tools must survive the trim
   assert.ok(kept.includes('skill'), 'skill from another plugin must be kept')
   assert.ok(kept.includes('web_search'), 'web_search from another plugin must be kept')
   assert.ok(kept.includes('generate_image'), 'generate_image from another plugin must be kept')
   assert.ok(!kept.includes('write'))
   assert.ok(!kept.includes('edit'))
-  assert.ok(!kept.includes('sun_trellis_artifact_update'))
-  assert.ok(!kept.includes('sun_trellis_task_update'))
+  assert.ok(!kept.includes('dsh_trellis_sun_artifact_update'))
+  assert.ok(!kept.includes('dsh_trellis_sun_task_update'))
 })
 
 test('applyReadonlyPolicy keeps everything for a skipped no_task session', () => {
@@ -111,13 +111,13 @@ test('applyReadonlyPolicy trims write/edit and lifecycle tools, keeps artifact c
   const pruned = applyReadonlyPolicy(FULL, 'planning', false)
   assert.ok(pruned)
   const kept = names(pruned)
-  assert.ok(kept.includes('sun_trellis_artifact_update'))
-  assert.ok(kept.includes('sun_trellis_task_update'))
+  assert.ok(kept.includes('dsh_trellis_sun_artifact_update'))
+  assert.ok(kept.includes('dsh_trellis_sun_task_update'))
   assert.ok(kept.includes('skill'), 'skill from another plugin must be kept in planning')
   assert.ok(kept.includes('web_search'), 'web_search from another plugin must be kept in planning')
   assert.ok(!kept.includes('write'))
-  assert.ok(!kept.includes('sun_trellis_task_create'))
-  assert.ok(!kept.includes('sun_trellis_task_skip'))
+  assert.ok(!kept.includes('dsh_trellis_sun_task_create'))
+  assert.ok(!kept.includes('dsh_trellis_sun_task_skip'))
 })
 
 test('applyReadonlyPolicy returns null (no pruning) for authorized phases', () => {
@@ -138,13 +138,13 @@ test('trim sets are the expected export surfaces', () => {
   assert.ok(PLANNING_TRIM instanceof Set)
   assert.deepEqual(AUTHORIZATIONS, ['undecided', 'planning', 'authorized'])
   assert.ok(UNDECIDED_TRIM.has('write'))
-  assert.ok(UNDECIDED_TRIM.has('sun_trellis_task_update'))
-  assert.ok(!UNDECIDED_TRIM.has('sun_trellis_task_create'))
-  assert.ok(!UNDECIDED_TRIM.has('sun_trellis_task_skip'))
+  assert.ok(UNDECIDED_TRIM.has('dsh_trellis_sun_task_update'))
+  assert.ok(!UNDECIDED_TRIM.has('dsh_trellis_sun_task_create'))
+  assert.ok(!UNDECIDED_TRIM.has('dsh_trellis_sun_task_skip'))
   assert.ok(PLANNING_TRIM.has('write'))
-  assert.ok(PLANNING_TRIM.has('sun_trellis_task_create'))
-  assert.ok(PLANNING_TRIM.has('sun_trellis_task_skip'))
-  assert.ok(!PLANNING_TRIM.has('sun_trellis_artifact_update'))
+  assert.ok(PLANNING_TRIM.has('dsh_trellis_sun_task_create'))
+  assert.ok(PLANNING_TRIM.has('dsh_trellis_sun_task_skip'))
+  assert.ok(!PLANNING_TRIM.has('dsh_trellis_sun_artifact_update'))
 })
 
 const FULL_SECTIONS = [
@@ -155,9 +155,9 @@ const FULL_SECTIONS = [
   { name: 'tool:edit', text: 'Use the edit tool...' },
   { name: 'tool:glob', text: 'Use the glob tool...' },
   { name: 'tool:grep', text: 'Use the grep tool...' },
-  { name: 'tool:sun_trellis_task_create', text: 'Create task...' },
-  { name: 'tool:sun_trellis_task_skip', text: 'Skip task...' },
-  { name: 'tool:sun_trellis_artifact_update', text: 'Update artifact...' },
+  { name: 'tool:dsh_trellis_sun_task_create', text: 'Create task...' },
+  { name: 'tool:dsh_trellis_sun_task_skip', text: 'Skip task...' },
+  { name: 'tool:dsh_trellis_sun_artifact_update', text: 'Update artifact...' },
   { name: 'tool:web_search', text: 'Search the web...' },
 ]
 
@@ -170,12 +170,12 @@ test('applyReadonlySections trims only denylist tool sections in undecided phase
   assert.ok(names.includes('tool:read'))
   assert.ok(names.includes('tool:glob'))
   assert.ok(names.includes('tool:grep'))
-  assert.ok(names.includes('tool:sun_trellis_task_create'))
-  assert.ok(names.includes('tool:sun_trellis_task_skip'))
+  assert.ok(names.includes('tool:dsh_trellis_sun_task_create'))
+  assert.ok(names.includes('tool:dsh_trellis_sun_task_skip'))
   assert.ok(names.includes('tool:web_search'), 'tool:web_search section from another plugin must be kept')
   assert.ok(!names.includes('tool:write'), 'tool:write section must be pruned')
   assert.ok(!names.includes('tool:edit'), 'tool:edit section must be pruned')
-  assert.ok(!names.includes('tool:sun_trellis_artifact_update'), 'artifact update must not be allowed in undecided')
+  assert.ok(!names.includes('tool:dsh_trellis_sun_artifact_update'), 'artifact update must not be allowed in undecided')
 })
 
 test('applyReadonlySections preserves artifact channel and trims denylist sections in planning phase', () => {
@@ -184,12 +184,12 @@ test('applyReadonlySections preserves artifact channel and trims denylist sectio
   const names = pruned.map((s) => s.name)
   assert.ok(names.includes('persona'))
   assert.ok(names.includes('tool:read'))
-  assert.ok(names.includes('tool:sun_trellis_artifact_update'))
+  assert.ok(names.includes('tool:dsh_trellis_sun_artifact_update'))
   assert.ok(names.includes('tool:web_search'), 'tool:web_search section from another plugin must be kept')
   assert.ok(!names.includes('tool:write'), 'tool:write must be pruned in planning')
   assert.ok(!names.includes('tool:edit'), 'tool:edit must be pruned in planning')
-  assert.ok(!names.includes('tool:sun_trellis_task_create'))
-  assert.ok(!names.includes('tool:sun_trellis_task_skip'))
+  assert.ok(!names.includes('tool:dsh_trellis_sun_task_create'))
+  assert.ok(!names.includes('tool:dsh_trellis_sun_task_skip'))
 })
 
 test('applyReadonlySections returns null (no pruning) for authorized / skipped sessions', () => {
@@ -218,7 +218,7 @@ test('readonlyInstructionFor returns explicit Chinese instruction text per state
   assert.ok(planning.length > 0)
   assert.ok(planning.includes('只读'), 'planning text must carry 只读 semantics')
   assert.ok(planning.includes('方案获批前'), 'planning text must mention approval gate')
-  assert.ok(planning.includes('sun_trellis_artifact_update'), 'planning text must point to the artifact write channel')
+  assert.ok(planning.includes('dsh_trellis_sun_artifact_update'), 'planning text must point to the artifact write channel')
 })
 
 test('readonlyInstructionFor returns null for authorized / unknown values', () => {

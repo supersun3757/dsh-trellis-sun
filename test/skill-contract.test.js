@@ -111,7 +111,7 @@ test('feat track wires spec-delta into the design gate and the archive merge', (
   assert.match(feat, /design 与 spec-delta 均 approved/, 'the design gate must cover both artifacts')
   assert.match(feat, /无增量/, 'the empty-delta convention must be stated')
   assert.match(feat, /update-spec/, 'spec-delta must be distinguished from update-spec')
-  assert.match(feat, /sun_trellis_artifact_update/, 'planning writes must route through the artifact tool')
+  assert.match(feat, /dsh_trellis_sun_artifact_update/, 'planning writes must route through the artifact tool')
 
   const finish = read('skills/dsh-trellis-sun-finish-work/SKILL.md')
   assert.match(finish, /应用 spec-delta/, 'finish-work must apply the delta')

@@ -1,4 +1,4 @@
-# trellis-workflow / web-ui — 质量检查与约定
+# dsh-trellis-sun / web-ui — 质量检查与约定
 
 > 本文件由 `feat` 任务 `trellis-right-phase-panel`（会话头部阶段徽标）沉淀。
 > 证据：任务规划产物（prd/design/design-review/implement/review）与本包 `lib/` 源码。
@@ -29,7 +29,7 @@
    （先例 `lib/settings.js:40`）：headless（无 web 服务）profile 下该功能整体不激活，
    主 fiber 上的面包屑/skills/诊断工具不受影响；路由 disposer 交 `web.effect`，清理监听
    用 `web.on('session/disposed', ...)`。
-4. **浏览器只读 API 路由契约**（`POST /trellis-workflow/api/task-state`）：
+4. **浏览器只读 API 路由契约**（`POST /dsh-trellis-sun/api/task-state`）：
    - 本地 trust-fence 在前（`lib/trust.js`，dsh-client-connection 的 `isTrustedApiRequest`
      未从包公共入口导出，需本地重实现 ~40 行；**Node `URL.hostname` 对 IPv6 返回带括号的
      `[::1]`**，环回判断须同时含 `'::1'` 与 `'[::1]'`）；
@@ -48,13 +48,13 @@
 
 - 工具 execute 返回对象含 undefined 可选字段 → `ToolOutputError`（见约定 2）。
 - `slots.register` 裸调用在声明方未加载时抛错（见约定 1，用 `slots.inject` 包裹）。
-- **徽标缓存刷新链路**：Web 徽标只消费 host 缓存；缓存写入点有 `sun_trellis_ui_update`
-  工具、`sun_trellis_task_create`（建任务成功后即时刷新本会话摘要）与每轮 `agent/pre-step`
+- **徽标缓存刷新链路**：Web 徽标只消费 host 缓存；缓存写入点有 `dsh_trellis_sun_ui_update`
+  工具、`dsh_trellis_sun_task_create`（建任务成功后即时刷新本会话摘要）与每轮 `agent/pre-step`
   顺带刷新（现已在 `lib/index.js` 的 pre-step 中实现，命中 allowlist 的会话每轮自动刷新
   缓存）。曾踩坑：仅靠模型自觉调用工具时，创建任务后 UI 长期不刷新——pre-step 刷新是
-  兜底，模型在阶段切换/建任务后仍应调用 `sun_trellis_ui_update` 以获得当轮即时刷新。
+  兜底，模型在阶段切换/建任务后仍应调用 `dsh_trellis_sun_ui_update` 以获得当轮即时刷新。
 - Web UI 是否可见依赖 allowlist：`F:\dsh-plugins\dsh-trellis` 不在
-  `C:\Users\12644\.dsh\settings.yaml` 的 `trellis-workflow.allowlist` 时，该会话徽标按
+  `C:\Users\12644\.dsh\settings.yaml` 的 `dsh-trellis-sun.allowlist` 时，该会话徽标按
   `no-match` 隐藏（属配置，非缺陷）；验证 UI 需把项目根加入 allowlist 并**重启 DSH**
   （静态 Cordis 插件改动无热重载）。
 - **新对话看不到徽标 → 无法激活任务**：blank 会话的 session header 被 harness 隐藏
@@ -73,10 +73,10 @@
    `<sessionFileBasename(sessionId)>.json` 存在时以其 `current_task` 为准（含显式
    `null` = 已解绑，**不回退** canonical）；文件不存在（legacy 会话）才回退
    `activeTaskPointer` 项目级选择。`resolveProjectState` 带 sessionId 解析——
-   面包屑/sun_trellis_state/chip 摘要三处一致，并行会话各绑各的任务互不覆盖。
-8. **看板 API**：`POST /trellis-workflow/api/board`（读取，trust-fence + 会话存活 +
+   面包屑/dsh_trellis_sun_state/chip 摘要三处一致，并行会话各绑各的任务互不覆盖。
+8. **看板 API**：`POST /dsh-trellis-sun/api/board`（读取，trust-fence + 会话存活 +
    header.cwd → allowlist；浏览器触发时允许直接 fs 读取，因其由用户显式打开、低频）；
-   `POST /trellis-workflow/api/bind`（变更）：请求只带 `{sessionId, taskSlug|null}`；
+   `POST /dsh-trellis-sun/api/bind`（变更）：请求只带 `{sessionId, taskSlug|null}`；
    **项目 root 永远来自会话 header**，taskSlug 过白名单
    `/^[A-Za-z0-9._-]{1,120}$/` + 对 root 存在性校验；只写本会话指针文件，写后刷新
    chip 缓存（refreshSummary → lruSet）。浏览（board）绝不改状态；变更只有显式按钮。
@@ -296,7 +296,7 @@
     `ledger.bundles.has(pkg.name)` 判「是否已配置」——**key 带 `#<row id>` 就永不命中，
     整段配置区静默不渲染**（无报错、无日志）。
     - **`plugins.row.config`（`<包名>#<row id>`）不再注册**：两个座位渲染的是同一个表单，
-      用户在「插件详情页」与「包含的组件 → trellis-workflow 行详情页」看到两层重复设置。
+      用户在「插件详情页」与「包含的组件 → dsh-trellis-sun 行详情页」看到两层重复设置。
       单入口后，组件行详情页不再有 Trellis 配置内容；该行本身（宿主框架）不受影响。
     - **座位 key 的包名只能有一处字面量**（`const PKG = ...`，key 从它派生）：两份字面量漂移同样
       静默失效。（loader `id:` 与本项目 `package.json` 的 `name` 是另一处必然存在的同名字面量，
@@ -328,14 +328,14 @@
 ## 项目文档视图与 doc.json 写接口（feat-11-03-doc-config-ui 沉淀）
 
 39. **项目级文档编辑是一级 `conversation.view`，不是设置页**：
-    - 注册 `{ name:'conversation.view', id:'trellis-workflow:docs', order:20, locale, label: () => t('viewDocs') }`
+    - 注册 `{ name:'conversation.view', id:'dsh-trellis-sun:docs', order:20, locale, label: () => t('viewDocs') }`
       + `DocConfigView`；座位是 `list` / `session` 作用域，组件由框架注入标准 prop `sessionId`
       与绑定 locale 的 `t`，会话切换按 key 重挂载，不订阅 `sessions.list`；
     - `label` 用 thunk，语言切换无需重新注册；
     - `package.json` 的 `dsh.client.inject` 必须含声明方 `@deepseek-ai/dsh-client-ui-conversation`
       （否则无加载顺序保证），注册一律用 `ctx.slots.inject(...)` 包裹（见第 1 / 37 条）；
     - 宿主只为**非 blank 会话**渲染 `conversation.view`，新会话首条消息前没有该标签，属宿主行为。
-40. **`POST /trellis-workflow/api/doc-config` 的读写契约**：
+40. **`POST /dsh-trellis-sun/api/doc-config` 的读写契约**：
     - 三个 action：`read`（磁盘快照）、`preview`（校验草稿 + 预算，不写盘）、`save`（校验 →
       写盘 → 回读快照）；
     - 项目根只来自 `sessions.get(sessionId).header.cwd` → `matchAllowlist`，请求体不可指定；

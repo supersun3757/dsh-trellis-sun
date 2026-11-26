@@ -28,7 +28,7 @@ test('task chip occupies header utilities AND input dock hero seats', () => {
   // Hero seat (blank sessions): the header hides its whole chrome while a
   // session is blank, so the same chip must also render on the input dock.
   assert.match(source, /ctx\.slots\.inject\('conversation\.input\.dock'/)
-  assert.match(source, /id: 'trellis-workflow:task-chip-hero'/)
+  assert.match(source, /id: 'dsh-trellis-sun:task-chip-hero'/)
 
   // The hero seat self-hides with `session.blank === true`, the same effective
   // predicate the harness header uses to hide its chrome (for a blank session
@@ -88,7 +88,7 @@ test('settings card lives on the Plugins page and browses via uiWorkspace (0.1.7
 
   // The shared host-owned configuration form is the read/write channel. The
   // entry id is resolved from the describe mirror rather than assumed: a
-  // bundle-inserted row is loaded as `include:trellis-workflow`, so the old
+  // bundle-inserted row is loaded as `include:dsh-trellis-sun`, so the old
   // `whileServed([NS])` gate never opened and the card rendered blank.
   assert.match(source, /new TrellisConfigController\(ctx\.configForms\)/)
   assert.match(source, /function entryIdOf\(served\)/)
@@ -282,7 +282,7 @@ test('the shipped card renders the form for a page and the one-liner for a summa
     invalid: false,
     saving: false,
     failed: false,
-    served: ['trellis-workflow'],
+    served: ['dsh-trellis-sun'],
     allowlist: empty,
     injectStep: empty,
     skipKeywords: empty,

@@ -10,11 +10,11 @@ description: "行为等价重构工作流：代码优化、模块拆分与清理
 
 ## 启动
 
-1. **恢复上下文**：用 `sun_trellis_state` 或读取 `.trellis/.runtime/sessions/*.json` 的 `current_task`；也可加载 `dsh-trellis-sun-continue`。
-2. **无 task 且用户同意**：加载 `dsh-trellis-sun-start` $\to$ 用内置工具 **`sun_trellis_task_create`** 创建任务：
+1. **恢复上下文**：用 `dsh_trellis_sun_state` 或读取 `.trellis/.runtime/sessions/*.json` 的 `current_task`；也可加载 `dsh-trellis-sun-continue`。
+2. **无 task 且用户同意**：加载 `dsh-trellis-sun-start` $\to$ 用内置工具 **`dsh_trellis_sun_task_create`** 创建任务：
    - 参数：`workType=refactor`，自动写入 `.trellis/tasks/<slug>/task.json`（status=planning）、播种 `scan.md` 等模板，并同步写入 `.trellis/.runtime/sessions/` 的 `current_task`，面包屑与 Web 徽标立即生效；
    - slug 格式严格为 `refactor-<mm-dd>-<短名>`，由工具自动推导校验。
-3. **状态与阶段更新**：使用内置工具 **`sun_trellis_task_update`**（如 `status="in_progress", stage="apply"`）：
+3. **状态与阶段更新**：使用内置工具 **`dsh_trellis_sun_task_update`**（如 `status="in_progress", stage="apply"`）：
    ```json
    "work": { "type": "refactor", "mode": "standard", "stage": "scan" }
    ```
@@ -49,7 +49,7 @@ description: "行为等价重构工作流：代码优化、模块拆分与清理
 |---|---|---|---|
 | 无 `scan.md` 或用户未勾选纳入项 | scan | 编写 `scan.md`：扫描现状、列出坏味道与候选范围，**停住等用户勾选确认** | design |
 | 已勾选确认；无 design 或 status≠approved | design | 编写 `refactor-design.md`：设计重构目标结构与测试保护策略，**停住等用户批准** | apply |
-| design 获批；规划产物齐备 | 准备开工 | 用 `sun_trellis_task_update` 录入 `steps` 清单（含验收与 `verification`）；切 `status=in_progress` | apply |
+| design 获批；规划产物齐备 | 准备开工 | 用 `dsh_trellis_sun_task_update` 录入 `steps` 清单（含验收与 `verification`）；切 `status=in_progress` | apply |
 | in_progress | apply | 加载 `dsh-trellis-sun-before-dev` $\to$ 按 `task.json.steps` 逐步改造；编写 `apply-notes.md` | finish |
 | 步骤标记 verification=human 且未确认 | 暂停 | 等待用户人工确认该步骤生效 | 确认后继续 |
 | 全部步骤实施与验证完毕 | final | 加载 `dsh-trellis-sun-check` 运行全量回归验证，记录验证结果 | finish |
@@ -92,7 +92,7 @@ description: "行为等价重构工作流：代码优化、模块拆分与清理
 - `scan.md`：现状扫描、技术债务盘点、纳入范围与排除范围。
 - `refactor-design.md`：目标结构设计、依赖抽离方式、测试保护方案。
 - `apply-notes.md`：分步改动记录、前后对比证据与回归测试输出。
-- `task.json.steps`：由 `sun_trellis_task_update` 维护的执行步骤清单。
+- `task.json.steps`：由 `dsh_trellis_sun_task_update` 维护的执行步骤清单。
 
 ## 反模式（严厉禁止）
 
