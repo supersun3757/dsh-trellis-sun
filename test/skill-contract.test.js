@@ -8,7 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const read = (rel) => readFileSync(path.join(repoRoot, rel), 'utf8')
 
 test('bootstrap contract covers migration, initialization, root metadata and files whitelist', () => {
-  const text = read('skills/sun-trellis-spec-bootstrap/SKILL.md')
+  const text = read('skills/dsh-trellis-sun-spec-bootstrap/SKILL.md')
   assert.match(text, /迁移分支/)
   assert.match(text, /初始化分支/)
   assert.match(text, /\.trellis\/doc\.json/)
@@ -19,7 +19,7 @@ test('bootstrap contract covers migration, initialization, root metadata and fil
 })
 
 test('development and verification consumers read the configured files whitelist', () => {
-  for (const rel of ['skills/sun-trellis-before-dev/SKILL.md', 'skills/sun-trellis-check/SKILL.md']) {
+  for (const rel of ['skills/dsh-trellis-sun-before-dev/SKILL.md', 'skills/dsh-trellis-sun-check/SKILL.md']) {
     const text = read(rel)
     assert.match(text, /\.trellis\/doc\.json/, rel)
     assert.match(text, /files/, rel)
@@ -28,7 +28,7 @@ test('development and verification consumers read the configured files whitelist
 })
 
 test('update-spec routes to configured docs and requires files maintenance for new injected docs', () => {
-  const text = read('skills/sun-trellis-update-spec/SKILL.md')
+  const text = read('skills/dsh-trellis-sun-update-spec/SKILL.md')
   assert.match(text, /优先更新已有权威文档/)
   assert.match(text, /新增需要注入的文档必须同步 files/)
   assert.match(text, /归属不明就问/)
@@ -37,8 +37,8 @@ test('update-spec routes to configured docs and requires files maintenance for n
 
 test('workflow skills and templates no longer present the legacy directory as the only quality gate', () => {
   const files = [
-    'skills/sun-trellis-feat/SKILL.md',
-    'skills/sun-trellis-refactor/SKILL.md',
+    'skills/dsh-trellis-sun-feat/SKILL.md',
+    'skills/dsh-trellis-sun-refactor/SKILL.md',
     'skills/_templates/feat/design.md',
     'skills/_templates/feat/review.md',
     'skills/_templates/issue/fix-note.md',
@@ -55,10 +55,10 @@ test('workflow skills and templates no longer present the legacy directory as th
 })
 test('skill path templates use $root instead of a hardcoded spec package root', () => {
   const files = [
-    'skills/sun-trellis-spec-bootstrap/SKILL.md',
-    'skills/sun-trellis-update-spec/SKILL.md',
-    'skills/sun-trellis-before-dev/SKILL.md',
-    'skills/sun-trellis-check/SKILL.md',
+    'skills/dsh-trellis-sun-spec-bootstrap/SKILL.md',
+    'skills/dsh-trellis-sun-update-spec/SKILL.md',
+    'skills/dsh-trellis-sun-before-dev/SKILL.md',
+    'skills/dsh-trellis-sun-check/SKILL.md',
   ]
   for (const rel of files) {
     const text = read(rel)
@@ -68,11 +68,11 @@ test('skill path templates use $root instead of a hardcoded spec package root', 
 })
 test('consumer skills do not retain a second hardcoded spec root', () => {
   const files = [
-    'skills/sun-trellis-update-spec/SKILL.md',
-    'skills/sun-trellis-before-dev/SKILL.md',
-    'skills/sun-trellis-check/SKILL.md',
-    'skills/sun-trellis-feat/SKILL.md',
-    'skills/sun-trellis-refactor/SKILL.md',
+    'skills/dsh-trellis-sun-update-spec/SKILL.md',
+    'skills/dsh-trellis-sun-before-dev/SKILL.md',
+    'skills/dsh-trellis-sun-check/SKILL.md',
+    'skills/dsh-trellis-sun-feat/SKILL.md',
+    'skills/dsh-trellis-sun-refactor/SKILL.md',
     'skills/_templates/work-types.md',
     'skills/_templates/feat/review.md',
   ]
@@ -82,10 +82,10 @@ test('consumer skills do not retain a second hardcoded spec root', () => {
 })
 test('spec skills carry a complete and valid doc.json context', () => {
   for (const rel of [
-    'skills/sun-trellis-spec-bootstrap/SKILL.md',
-    'skills/sun-trellis-before-dev/SKILL.md',
-    'skills/sun-trellis-check/SKILL.md',
-    'skills/sun-trellis-update-spec/SKILL.md',
+    'skills/dsh-trellis-sun-spec-bootstrap/SKILL.md',
+    'skills/dsh-trellis-sun-before-dev/SKILL.md',
+    'skills/dsh-trellis-sun-check/SKILL.md',
+    'skills/dsh-trellis-sun-update-spec/SKILL.md',
   ]) {
     const text = read(rel)
     assert.match(text, /\.trellis\/doc\.json/, rel)
@@ -94,26 +94,26 @@ test('spec skills carry a complete and valid doc.json context', () => {
     assert.match(text, /完整.*路径/, rel)
   }
 
-  const before = read('skills/sun-trellis-before-dev/SKILL.md')
+  const before = read('skills/dsh-trellis-sun-before-dev/SKILL.md')
   assert.match(before, /读取顺序/)
-  const update = read('skills/sun-trellis-update-spec/SKILL.md')
+  const update = read('skills/dsh-trellis-sun-update-spec/SKILL.md')
   assert.match(update, /读取与写入顺序/)
   assert.match(update, /docs\/guides\/index\.md/)
 
-  const bootstrap = read('skills/sun-trellis-spec-bootstrap/SKILL.md')
+  const bootstrap = read('skills/dsh-trellis-sun-spec-bootstrap/SKILL.md')
   assert.doesNotMatch(bootstrap, /"files"\s*:\s*\[\s*"\$root\//)
   assert.ok(!bootstrap.includes('$root/`n'), 'directory tree must not contain a literal `n')
 })
 
 test('feat track wires spec-delta into the design gate and the archive merge', () => {
-  const feat = read('skills/sun-trellis-feat/SKILL.md')
+  const feat = read('skills/dsh-trellis-sun-feat/SKILL.md')
   assert.match(feat, /spec-delta\.md/, 'feat skill must name spec-delta.md')
   assert.match(feat, /design 与 spec-delta 均 approved/, 'the design gate must cover both artifacts')
   assert.match(feat, /无增量/, 'the empty-delta convention must be stated')
   assert.match(feat, /update-spec/, 'spec-delta must be distinguished from update-spec')
   assert.match(feat, /sun_trellis_artifact_update/, 'planning writes must route through the artifact tool')
 
-  const finish = read('skills/sun-trellis-finish-work/SKILL.md')
+  const finish = read('skills/dsh-trellis-sun-finish-work/SKILL.md')
   assert.match(finish, /应用 spec-delta/, 'finish-work must apply the delta')
   assert.match(finish, /逐字一致/, 'the merge must verify the old text verbatim')
   assert.match(finish, /禁止合并/, 'an unapproved delta must never be merged')
@@ -132,7 +132,7 @@ test('feat track wires spec-delta into the design gate and the archive merge', (
 })
 
 test('check skill states scope, rule lookup, coverage and fail-closed', () => {
-  const text = read('skills/sun-trellis-check/SKILL.md')
+  const text = read('skills/dsh-trellis-sun-check/SKILL.md')
   assert.match(text, /第一步：定范围/, 'the scope step must be explicit')
   assert.match(text, /git diff --name-only/, 'the change set must come from git, not from memory')
   assert.match(text, /第二步：取规则/, 'rules must be resolved from paths')
@@ -142,7 +142,7 @@ test('check skill states scope, rule lookup, coverage and fail-closed', () => {
 })
 
 test('review stage carries the evidence-based workflow and the two-level cadence', () => {
-  const feat = read('skills/sun-trellis-feat/SKILL.md')
+  const feat = read('skills/dsh-trellis-sun-feat/SKILL.md')
   assert.match(feat, /证据型工作流/, 'the review stage must be evidence-based')
   assert.match(feat, /固定快照/, 'reviews must pin a git snapshot')
   assert.match(feat, /引用原文/, 'findings must quote the source text')
@@ -169,9 +169,9 @@ test('graph queries are an external dependency with an explicit degradation path
   assert.doesNotMatch(doc, /`impact`/, 'there is no tool named impact')
 
   for (const rel of [
-    'skills/sun-trellis-feat/SKILL.md',
-    'skills/sun-trellis-before-dev/SKILL.md',
-    'skills/sun-trellis-check/SKILL.md',
+    'skills/dsh-trellis-sun-feat/SKILL.md',
+    'skills/dsh-trellis-sun-before-dev/SKILL.md',
+    'skills/dsh-trellis-sun-check/SKILL.md',
   ]) {
     assert.match(read(rel), /_templates\/graph-queries\.md/, `${rel} must point at the shared protocol`)
   }

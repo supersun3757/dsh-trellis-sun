@@ -1,9 +1,9 @@
 ---
-name: sun-trellis-issue
-description: "Bug 修复工作流：处理缺陷、异常、逻辑错误与回归问题。当用户反馈 Bug、报错、运行结果不对、改来改去都不对、测试跑绿了但逻辑依然怪异时使用。推进 report -> analyze -> fix -> fix-note。不可用于新功能（使用 sun-trellis-feat）或行为等价重构（使用 sun-trellis-refactor）。"
+name: dsh-trellis-sun-issue
+description: "Bug 修复工作流：处理缺陷、异常、逻辑错误与回归问题。当用户反馈 Bug、报错、运行结果不对、改来改去都不对、测试跑绿了但逻辑依然怪异时使用。推进 report -> analyze -> fix -> fix-note。不可用于新功能（使用 dsh-trellis-sun-feat）或行为等价重构（使用 dsh-trellis-sun-refactor）。"
 ---
 
-# sun-trellis-issue
+# dsh-trellis-sun-issue
 
 Bug 修复流程，载体为 Trellis task。
 对照规则：`_templates/work-types.md`；产物模板：`_templates/issue/`。
@@ -22,8 +22,8 @@ Bug 修复流程，载体为 Trellis task。
 
 ## 启动
 
-1. **恢复上下文**：用 `sun_trellis_state` 或读取 `.trellis/.runtime/sessions/*.json` 的 `current_task`；也可加载 `sun-trellis-continue`。
-2. **无 task 且用户同意**：加载 `sun-trellis-start` $\to$ 用内置工具 **`sun_trellis_task_create`** 创建任务：
+1. **恢复上下文**：用 `sun_trellis_state` 或读取 `.trellis/.runtime/sessions/*.json` 的 `current_task`；也可加载 `dsh-trellis-sun-continue`。
+2. **无 task 且用户同意**：加载 `dsh-trellis-sun-start` $\to$ 用内置工具 **`sun_trellis_task_create`** 创建任务：
    - 参数：`workType=issue`，自动写入 `.trellis/tasks/<slug>/task.json`（status=planning）、播种 `report.md` 等模板，并同步写入 `.trellis/.runtime/sessions/` 的 `current_task`，面板状态与 Web 徽标立即生效；
    - slug 格式严格为 `issue-<mm-dd>-<短名>`，由工具自动推导校验。
 3. **状态与阶段更新**：使用内置工具 **`sun_trellis_task_update`**（如 `status="in_progress", stage="fix"`；自动校验轨道并刷新状态）：
@@ -50,20 +50,20 @@ Bug 修复流程，载体为 Trellis task。
 | 无 `report.md`（或未写清复现） | report | 编写 `report.md`：错误现象、稳定复现步骤、期望表现、实际表现、日志证据 | analyze 或 fix |
 | 有 report；根因不显然且无 analysis | analyze | 编写 `analysis.md`：建立单命令跑红闭环，产出可证伪假说，顺着数据流深查根本原因 | 确认根因后进 fix |
 | 根因已确认且有跑红命令 | report/analyze | 确认修复思路；调 `sun_trellis_task_update(status: 'in_progress')` | fix |
-| in_progress；修复未完成 | fix | 加载 `sun-trellis-before-dev` $\to$ 遵循最小改动原则修复根因，跑绿复现命令 | fix-note |
+| in_progress；修复未完成 | fix | 加载 `dsh-trellis-sun-before-dev` $\to$ 遵循最小改动原则修复根因，跑绿复现命令 | fix-note |
 | 修复完成 | fix-note | 编写 `fix-note.md`：记录具体改动、验证证据（单测/抓包）与技术债务 | finish |
-| fix-note 齐备 | finish | 加载 `sun-trellis-check` 验证 $\to$ 必要时 `sun-trellis-update-spec` $\to$ commit $\to$ `sun-trellis-finish-work` / archive | 完成 |
+| fix-note 齐备 | finish | 加载 `dsh-trellis-sun-check` 验证 $\to$ 必要时 `dsh-trellis-sun-update-spec` $\to$ commit $\to$ `dsh-trellis-sun-finish-work` / archive | 完成 |
 
 ### 跳过 analyze 的准入条件
 仅当根因一眼能确定（例如明显的拼写错误、少传已知参数），且能在 `report.md` 或 `fix-note.md` 中写清确凿代码证据时才允许跳过。在产物中必须注明“跳过 analyze 的理由”。
-若同一问题修了多次仍复发，或测试虽然变绿但逻辑仍别扭 $\to$ **必须立刻加载 `sun-trellis-break-loop`，停止打局部补丁**。
+若同一问题修了多次仍复发，或测试虽然变绿但逻辑仍别扭 $\to$ **必须立刻加载 `dsh-trellis-sun-break-loop`，停止打局部补丁**。
 
 ## 修复核心规则
 
 - **根因修复优先于表象补丁**：必须找到数据流或状态机的源头漏洞，严禁仅在出错点套 try-catch 或无脑加判空。
-- **严禁借修 Bug 夹带私货**：不借修 Bug 顺手大改无关代码；重构走 `sun-trellis-refactor`。
-- **行为变更超出 Bug 定义**：若修复需要改变正常业务逻辑，立即转为 `sun-trellis-feat` 或拆分任务。
-- **严格遵循质量门**：通过 `sun-trellis-check` 执行回归测试，且测试必须断言真实业务不变量。
+- **严禁借修 Bug 夹带私货**：不借修 Bug 顺手大改无关代码；重构走 `dsh-trellis-sun-refactor`。
+- **行为变更超出 Bug 定义**：若修复需要改变正常业务逻辑，立即转为 `dsh-trellis-sun-feat` 或拆分任务。
+- **严格遵循质量门**：通过 `dsh-trellis-sun-check` 执行回归测试，且测试必须断言真实业务不变量。
 
 ## 人卡点与退出条件
 
@@ -77,9 +77,9 @@ Bug 修复流程，载体为 Trellis task。
 | 退出状态 | 触发条件 | 后续动作 |
 |---|---|---|
 | **NeedsHuman** | 复现信息不足 / 高风险方案待审 | 提出澄清问题或方案说明，停住等待用户回复 |
-| **SwitchRequired** | 发现超出缺陷范畴，涉及新需求或结构重构 | 转为 `sun-trellis-feat` 或 `sun-trellis-refactor` 处理 |
-| **LoopDetected** | 连续两次修复未果 / 测试绿了但逻辑怪异 | 加载 `sun-trellis-break-loop`，反思架构与测试水泥效应 |
-| **Completed** | `fix-note.md` 齐备 + `sun-trellis-check` 绿灯通过 | 提交代码并安全归档 |
+| **SwitchRequired** | 发现超出缺陷范畴，涉及新需求或结构重构 | 转为 `dsh-trellis-sun-feat` 或 `dsh-trellis-sun-refactor` 处理 |
+| **LoopDetected** | 连续两次修复未果 / 测试绿了但逻辑怪异 | 加载 `dsh-trellis-sun-break-loop`，反思架构与测试水泥效应 |
+| **Completed** | `fix-note.md` 齐备 + `dsh-trellis-sun-check` 绿灯通过 | 提交代码并安全归档 |
 
 ## 产物清单
 

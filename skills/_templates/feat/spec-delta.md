@@ -3,7 +3,7 @@
 status: draft   # draft | approved（与 design.md 同一套批准标记，owner 批准后才进 impl）
 
 > 本文件记录**本次改动本身对常驻 spec 的增量**：事前写好、随 design 一起评审、归档时机械合并。
-> 它与 `sun-trellis-update-spec` 不是一回事——那里沉淀的是实施中复盘出的教训（事后判断），
+> 它与 `dsh-trellis-sun-update-spec` 不是一回事——那里沉淀的是实施中复盘出的教训（事后判断），
 > 这里是改动的契约增量（事前提案）。
 >
 > 硬规则：
@@ -47,7 +47,7 @@ status: draft   # draft | approved（与 design.md 同一套批准标记，owner
 
 ```
 
-## 合并记录（由 `sun-trellis-finish-work` 归档时填写，实施者不要预填）
+## 合并记录（由 `dsh-trellis-sun-finish-work` 归档时填写，实施者不要预填）
 
 | 条目 | 结果 | 说明 |
 |------|------|------|

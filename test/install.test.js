@@ -95,7 +95,7 @@ test('buildRow omits config keys that were not supplied', () => {
 function staleProject() {
   const root = mkdtempSync(path.join(tmpdir(), 'trellis-reseed-'))
   const skillsDir = path.join(root, '.agents', 'skills')
-  const staleDir = path.join(skillsDir, 'sun-trellis-finish-work')
+  const staleDir = path.join(skillsDir, 'dsh-trellis-sun-finish-work')
   mkdirSync(staleDir, { recursive: true })
   const staleFile = path.join(staleDir, 'SKILL.md')
   writeFileSync(staleFile, 'stale skill text')
@@ -111,7 +111,7 @@ test('reseedProjectSkills overwrites stale skill text and stamps the package ver
 
   assert.equal(res.ok, true)
   assert.deepEqual(res.result.present, [], 'force must leave nothing on the skip path')
-  assert.ok(res.result.updated.includes('sun-trellis-finish-work'))
+  assert.ok(res.result.updated.includes('dsh-trellis-sun-finish-work'))
   assert.notEqual(readFileSync(staleFile, 'utf8'), 'stale skill text')
   assert.equal(readFileSync(versionFile, 'utf8').trim(), PACKAGE_VERSION)
   assert.ok(existsSync(path.join(skillsDir, '_templates', 'feat', 'spec-delta.md')))
@@ -123,8 +123,8 @@ test('reseed --dry-run reports the work without writing anything', async () => {
   const res = await reseedProjectSkills(root, { dryRun: true })
 
   assert.equal(res.ok, true)
-  assert.ok(res.result.updated.includes('sun-trellis-finish-work'), 'the stale skill is on the update path')
-  assert.ok(res.result.copied.includes('sun-trellis-feat'), 'missing skills are still provisioned')
+  assert.ok(res.result.updated.includes('dsh-trellis-sun-finish-work'), 'the stale skill is on the update path')
+  assert.ok(res.result.copied.includes('dsh-trellis-sun-feat'), 'missing skills are still provisioned')
   assert.match(res.message, /^\[dry-run\] /)
   assert.equal(readFileSync(staleFile, 'utf8'), 'stale skill text', 'dry-run must not overwrite')
   assert.equal(readFileSync(versionFile, 'utf8').trim(), '1.1.0', 'dry-run must not bump the marker')
@@ -156,7 +156,7 @@ test('reseed provisions a project that has no .agents/skills yet', async () => {
   const res = await reseedProjectSkills(root)
 
   assert.equal(res.ok, true)
-  assert.ok(res.result.copied.includes('sun-trellis-feat'))
+  assert.ok(res.result.copied.includes('dsh-trellis-sun-feat'))
   assert.ok(existsSync(path.join(root, '.agents', 'skills', VERSION_FILE_NAME)))
 })
 

@@ -153,9 +153,9 @@
    （`DOC_CONFIG_ERROR_INSTRUCTION`），不抛错中断 assembly。
 3. **`root` 只是 Skill 元数据**：默认 `.trellis/spec`，供 bootstrap/update-spec 做文档发现
    与沉淀；不得用它拼接或过滤 files，也不得让它改变运行时注入结果。
-4. **bootstrap 分支**：`sun-trellis-spec-bootstrap` 的迁移分支只写 `.trellis/doc.json`，不改业务
+4. **bootstrap 分支**：`dsh-trellis-sun-spec-bootstrap` 的迁移分支只写 `.trellis/doc.json`，不改业务
    Docs；初始化分支保留最小 Spec 骨架，并把实际创建、需注入的文件写入 files。
-5. **files 必须随新增规范同步维护**：`sun-trellis-update-spec` 新建需长期注入的文档时，必须把
+5. **files 必须随新增规范同步维护**：`dsh-trellis-sun-update-spec` 新建需长期注入的文档时，必须把
    完整相对路径加入 files；只更新已有文件正文无需改配置。归属不明时询问用户，禁止静默
    写回旧 Spec。
 6. **不要回退为目录扫描**：自定义 files 只支持明确文件，不新增 root 递归扫描、多 root 或

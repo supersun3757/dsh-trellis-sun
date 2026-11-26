@@ -15,7 +15,7 @@
 
 ---
 
-> **sun-Trellis fork** — this repo is forked from upstream `@banana-peeljj12/dsh-trellis` v0.5.1 and tracks DSH 0.2.2-rc.5 / Cordis 4.1.0. The package is published as `dsh-trellis-sun`; bundled skills are prefixed `sun-trellis-*` and bundled tools `sun_trellis_*`, so they coexist with an existing Trellis skill set instead of overwriting it. See [FORK.md](./FORK.md) for the divergence list.
+> **sun-Trellis fork** — this repo is forked from upstream `@banana-peeljj12/dsh-trellis` v0.5.1 and tracks DSH 0.2.2-rc.5 / Cordis 4.1.0. The package is published as `dsh-trellis-sun`; bundled skills are prefixed `dsh-trellis-sun-*` and bundled tools keep `sun_trellis_*` (public API, deliberately not renamed), so they coexist with an existing Trellis skill set instead of overwriting it. See [FORK.md](./FORK.md) for the divergence list.
 
 ## Overview
 
@@ -216,10 +216,10 @@ A project can declare the Markdown files Trellis should read in `.trellis/doc.js
 - `files`: the runtime injection whitelist. Every entry is a project-relative Markdown file path. Multiple files are supported, injected in order, and deduplicated. **Bodies are injected**, not paths.
 - `budgets` (optional): this project's own injection budget in KB — write only the field you want to override. Precedence: **`budgets` in `doc.json` > the `docFileBudgetKB` / `docTotalBudgetKB` settings > built-in 8KB / 32KB**, with hard caps of 128KB per file and 512KB in total (out-of-range values are clamped). `0`, negative numbers or non-numbers count as "not configured" and fall through to the next source.
 - **Budgets**: per-file and total caps (default 8KB / 32KB, UTF-8 bytes). Anything over the budget is truncated and marked `truncated / over budget — read <path>` so the model can fetch the rest; unreadable files are marked with their path too. The prompt header echoes the caps actually in effect.
-- `root`: Skill metadata only. `sun-trellis-spec-bootstrap` and `sun-trellis-update-spec` use it as the default documentation root for discovery and updates. It neither prefixes nor filters `files`, and changing it never changes runtime injection.
+- `root`: Skill metadata only. `dsh-trellis-sun-spec-bootstrap` and `dsh-trellis-sun-update-spec` use it as the default documentation root for discovery and updates. It neither prefixes nor filters `files`, and changing it never changes runtime injection.
 - Without `.trellis/doc.json`, the legacy `.trellis/spec/` scan is preserved (index only, no bodies). Once explicitly configured, unlisted legacy Specs are no longer injected.
 - An invalid explicit config produces a short repair diagnostic instead of silently falling back to the legacy tree.
-- Add any new long-lived injected document to `files`. Existing Docs projects can use the migration branch of `sun-trellis-spec-bootstrap`; new projects use its initialization branch.
+- Add any new long-lived injected document to `files`. Existing Docs projects can use the migration branch of `dsh-trellis-sun-spec-bootstrap`; new projects use its initialization branch.
 - **Visual editor**: switch to **"Project docs"** in the conversation's top-level view bar (next to Chat / Trajectory / Git) to view and edit the current project's `.trellis/doc.json`: add, remove and reorder files, edit the project's own "Injection budget" (per-file / total KB — blank inherits the plugin setting, an invalid value is marked inline and blocks saving), see each file's injection status (full body / truncated to the effective cap / path only) and budget usage, and seed a first draft from the existing `.trellis/spec` index when nothing is configured. A save takes effect on the very next injection — no restart.
 
 ---

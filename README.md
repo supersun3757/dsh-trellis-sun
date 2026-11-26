@@ -15,7 +15,7 @@
 
 ---
 
-> **sun-Trellis 分支** — 本仓库 fork 自上游 `@banana-peeljj12/dsh-trellis` v0.5.1，主线跟随 DSH 0.2.2-rc.5 / Cordis 4.1.0。包名改为 `dsh-trellis-sun`，内置技能统一为 `sun-trellis-*`、内置工具统一为 `sun_trellis_*`，可与项目中已有的 Trellis 技能并存而不互相覆盖。与上游的差异清单见 [FORK.md](./FORK.md)。
+> **sun-Trellis 分支** — 本仓库 fork 自上游 `@banana-peeljj12/dsh-trellis` v0.5.1，主线跟随 DSH 0.2.2-rc.5 / Cordis 4.1.0。包名改为 `dsh-trellis-sun`，内置技能统一为 `dsh-trellis-sun-*`，内置工具沿用 `sun_trellis_*`（对外 API，不改名），可与项目中已有的 Trellis 技能并存而不互相覆盖。与上游的差异清单见 [FORK.md](./FORK.md)。
 
 ## 项目简介
 
@@ -213,10 +213,10 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 - `files`：运行时注入白名单。每项必须是项目根相对的 Markdown 完整路径；支持多个文件，按配置顺序注入并去重。**注入的是正文**，不是路径。
 - `budgets`（可选）：本项目自己的注入预算，单位 KB，只写想覆盖的那一项即可。优先级 **`doc.json` 的 `budgets` > 插件设置 `docFileBudgetKB` / `docTotalBudgetKB` > 内置默认 8KB / 32KB**；单文件硬顶 128KB、合计硬顶 512KB，超出的值会被夹紧。写 `0`、负数或非数字视为未设置，自动回退上一级。
 - **注入预算**：单文件与合计各有一档上限（默认 8KB / 32KB，UTF-8 字节）。超出的部分会截断，并标注「已截断 / 超出预算，请 read <路径>」，模型可据此补读；读取失败的文件同样标注路径。提示词头会回显本次真实生效的两个上限。
-- `root`：仅供 `sun-trellis-spec-bootstrap`、`sun-trellis-update-spec` 等 Skill 作为文档发现与沉淀的默认根目录，不拼接或过滤 `files`，也不改变运行时注入结果。
+- `root`：仅供 `dsh-trellis-sun-spec-bootstrap`、`dsh-trellis-sun-update-spec` 等 Skill 作为文档发现与沉淀的默认根目录，不拼接或过滤 `files`，也不改变运行时注入结果。
 - 未配置 `.trellis/doc.json` 时继续扫描 `.trellis/spec/`（只注入索引，不注入正文）；显式配置后未列入 `files` 的旧 Spec 不再注入。
 - 显式配置无效时不会静默回退旧 Spec，而是注入一条简短修复提示。
-- 新增需长期注入的文档时，必须同步加入 `files`。已有 Docs 的项目可运行 `sun-trellis-spec-bootstrap` 的迁移分支；新项目使用其初始化分支。
+- 新增需长期注入的文档时，必须同步加入 `files`。已有 Docs 的项目可运行 `dsh-trellis-sun-spec-bootstrap` 的迁移分支；新项目使用其初始化分支。
 - **可视化配置**：在会话顶部视图栏切到 **「项目文档」**（与「对话 / 轨迹 / Git」同级），即可查看和编辑当前项目的 `.trellis/doc.json`：增删/排序文件、在「注入预算」里直接改本项目的单文件 / 合计上限（留空 = 继承插件设置，非法值就地标红且不能保存）、查看每个文件的注入状态（完整 / 将截断至 生效上限 / 仅保留路径）与预算占用；未配置时可一键载入现有 `.trellis/spec` 索引作为初稿。保存后下一次注入立即生效，无需重启。
 
 ---

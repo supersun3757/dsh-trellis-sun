@@ -30,7 +30,7 @@ execution_lane: standard   # quick | standard
   1. 
 - 若存在需要独立测试验证的步骤，请在任务步骤清单（`sun_trellis_task_update` 的 `steps`/`step`）中
   标注 `verification: 'ai'`；若存在需要人工验收的步骤，标注 `verification: 'human'`。
-- 验证证据在 `sun-trellis-check` 阶段记录；涉及产物验收的改动**必须**提供验证证据，否则不得进入
+- 验证证据在 `dsh-trellis-sun-check` 阶段记录；涉及产物验收的改动**必须**提供验证证据，否则不得进入
   code review。
 
 ## 风险与回滚

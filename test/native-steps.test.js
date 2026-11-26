@@ -183,7 +183,7 @@ test('getStagePractices returns disciplines for issue analyze/fix and detects bl
   assert.ok(fixRules.some((r) => r.includes('最小根因修复')))
 
   const blockedRules = getStagePractices('issue', 'fix', { isBlocked: true })
-  assert.ok(blockedRules.some((r) => r.includes('升阶警告') && r.includes('sun-trellis-break-loop')))
+  assert.ok(blockedRules.some((r) => r.includes('升阶警告') && r.includes('dsh-trellis-sun-break-loop')))
 
   const fullPrompt = formatPracticesPrompt(analyzeRules, false)
   assert.match(fullPrompt, /\[当前阶段工程规范\]/)
@@ -686,20 +686,20 @@ test('ensureProjectSkills auto-updates bundled skills on plugin version upgrade'
     writeFileSync(customSkillFile, 'custom skill content')
 
     // 4. Simulate a stale project version with modified skill content
-    const featSkillFile = path.join(root, '.agents', 'skills', 'sun-trellis-feat', 'SKILL.md')
+    const featSkillFile = path.join(root, '.agents', 'skills', 'dsh-trellis-sun-feat', 'SKILL.md')
     writeFileSync(featSkillFile, 'stale outdated feat skill content')
     writeFileSync(versionFile, '0.1.0') // older version
 
     // 5. Run ensureProjectSkills — should trigger auto-upgrade
     const upgradeRes = await ensureProjectSkills(fs, root)
-    assert.ok(upgradeRes.updated.includes('sun-trellis-feat'))
+    assert.ok(upgradeRes.updated.includes('dsh-trellis-sun-feat'))
     assert.equal(upgradeRes.version, PACKAGE_VERSION)
     assert.equal(readFileSync(versionFile, 'utf8').trim(), PACKAGE_VERSION)
 
     // Verify official skill was overwritten with latest packaged content
     const updatedFeatContent = readFileSync(featSkillFile, 'utf8')
     assert.notEqual(updatedFeatContent, 'stale outdated feat skill content')
-    assert.ok(updatedFeatContent.includes('sun-trellis-feat'))
+    assert.ok(updatedFeatContent.includes('dsh-trellis-sun-feat'))
 
     // Verify user custom skill remains completely untouched
     assert.equal(readFileSync(customSkillFile, 'utf8'), 'custom skill content')
@@ -810,9 +810,9 @@ test('ensureProjectSkills ships and upgrades the bootstrap migration contract', 
   try {
     const fs = mockFs(root)
     const res = await ensureProjectSkills(fs, root)
-    assert.ok(res.copied.includes('sun-trellis-spec-bootstrap'))
+    assert.ok(res.copied.includes('dsh-trellis-sun-spec-bootstrap'))
 
-    const skillFile = path.join(root, '.agents', 'skills', 'sun-trellis-spec-bootstrap', 'SKILL.md')
+    const skillFile = path.join(root, '.agents', 'skills', 'dsh-trellis-sun-spec-bootstrap', 'SKILL.md')
     const shipped = readFileSync(skillFile, 'utf8')
     assert.match(shipped, /迁移分支/)
     assert.match(shipped, /初始化分支/)
@@ -822,7 +822,7 @@ test('ensureProjectSkills ships and upgrades the bootstrap migration contract', 
     writeFileSync(skillFile, 'stale bootstrap without migration')
     writeFileSync(path.join(root, '.agents', 'skills', VERSION_FILE_NAME), '0.1.0')
     const upgraded = await ensureProjectSkills(fs, root)
-    assert.ok(upgraded.updated.includes('sun-trellis-spec-bootstrap'))
+    assert.ok(upgraded.updated.includes('dsh-trellis-sun-spec-bootstrap'))
     assert.match(readFileSync(skillFile, 'utf8'), /迁移分支/)
   } finally {
     rmSync(root, { recursive: true, force: true })

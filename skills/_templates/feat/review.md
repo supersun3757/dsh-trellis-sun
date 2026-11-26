@@ -28,11 +28,11 @@ round: 1   # 增量复查轮次；只扫上一轮快照之后的新增变化
 
 ## 验证证据
 
-- `sun-trellis-check`：
+- `dsh-trellis-sun-check`：
 - 项目质量门（编译/测试/运行验证，按项目配置的规范文件（`.trellis/doc.json` 的 files；无配置时使用 root 默认目录））：
 
 ## 结论
 
-- [ ] 通过（含 `sun-trellis-check` 与任务要求的验证）
+- [ ] 通过（含 `dsh-trellis-sun-check` 与任务要求的验证）
 - [ ] 需修复后重审
 - 历轮状态（编号稳定，保留 open / fixed / wontfix；同一问题连续 3 轮 blocking 或总轮次超过 3 轮 → 转人工）：

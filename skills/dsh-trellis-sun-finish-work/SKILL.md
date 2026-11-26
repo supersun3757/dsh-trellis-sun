@@ -1,9 +1,9 @@
 ---
-name: sun-trellis-finish-work
+name: dsh-trellis-sun-finish-work
 description: "收尾已完成或已归档的 Trellis 任务：确认 Git 工作区干净、执行规范提交、归档任务目录并沉淀研发日志与索引。"
 ---
 
-# sun-trellis-finish-work
+# dsh-trellis-sun-finish-work
 
 当任务实施与验证完毕、准备标记完成或归档时运行本技能。
 

@@ -1,9 +1,9 @@
 ---
-name: sun-trellis-session-insight
+name: dsh-trellis-sun-session-insight
 description: "解读运行时会话与任务状态：深度诊断 Trellis 工作流当前所处位置，包括活跃任务、状态、相位及诊断信息。"
 ---
 
-# sun-trellis-session-insight
+# dsh-trellis-sun-session-insight
 
 在采取行动前，使用本技能通过对磁盘运行时资产的精准探测，掌握 Trellis 工作流的准确当前状态。
 

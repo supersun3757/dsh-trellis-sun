@@ -48,7 +48,7 @@ dispatch 参数，而是被裸调用。`test/doc-config-route.test.js` 里的 6 
 | 面 | 上游 | 本仓库 |
 | --- | --- | --- |
 | 包名 | `@banana-peeljj12/dsh-trellis` | `dsh-trellis-sun` |
-| 内置技能（15） | `trellis-start` … `trellis-refactor` | `sun-trellis-start` … `sun-trellis-refactor` |
+| 内置技能（15） | `trellis-start` … `trellis-refactor` | `dsh-trellis-sun-start` … `dsh-trellis-sun-refactor` |
 | 内置工具（7） | `trellis_state`、`trellis_task_create` 等 | `sun_trellis_state`、`sun_trellis_task_create` 等 |
 | CLI | `trellis-install` | `sun-trellis-install` |
 | 仓库 | `1264459640/dsh-trellis` | `supersun3757/dsh-trellis-sun` |
@@ -56,7 +56,7 @@ dispatch 参数，而是被裸调用。`test/doc-config-route.test.js` 里的 6 
 **技能前缀不只是换个名字**：`lib/skills.js` 的 `ensureProjectSkills` 在版本变化时会
 **覆盖**它负责的技能目录。上游用 `trellis-*` 命名，一旦项目里已经有真正的 Trellis
 技能（`.agents/skills/trellis-*`），升级就会把它们替换成本插件的重写版。改成
-`sun-trellis-*` 之后两套技能可以并存，各自的目录互不相干。
+`dsh-trellis-sun-*` 之后两套技能可以并存，各自的目录互不相干。
 
 **刻意不改**的部分：
 

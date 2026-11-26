@@ -1,9 +1,9 @@
 ---
-name: sun-trellis-start
+name: dsh-trellis-sun-start
 description: "启动 Trellis 工作流：对用户诉求进行分类，在创建任务前必须先征得用户明确同意。适用于会话开始或需要新建任务时。"
 ---
 
-# sun-trellis-start
+# dsh-trellis-sun-start
 
 当当前会话无活跃任务（`no_task` 状态）时，根据用户需求分类，并在**获得明确同意后**创建任务。
 
@@ -44,4 +44,4 @@ sun_trellis_task_create({
 
 1. **未经用户同意严禁擅自建任务**：任何任务的创建必须先征得用户明确同意。
 2. **建任务（planning）≠ 批准写代码（impl）**：获得建任务同意仅代表进入规划期（工作区仍受只读保护），方案未获批前绝对禁止修改业务代码。
-3. **已有活跃任务绝不重复建**：若系统已报告活跃任务，优先通过 `sun-trellis-continue` 恢复上下文，切勿重复新建。
+3. **已有活跃任务绝不重复建**：若系统已报告活跃任务，优先通过 `dsh-trellis-sun-continue` 恢复上下文，切勿重复新建。

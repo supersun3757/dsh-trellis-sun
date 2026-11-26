@@ -92,7 +92,7 @@ test('seam 2 — a feat task seeds spec-delta.md and it is authored through the 
       '新增一条质量门说明。',
       '```',
       '',
-      '## 合并记录（由 `sun-trellis-finish-work` 归档时填写，实施者不要预填）',
+      '## 合并记录（由 `dsh-trellis-sun-finish-work` 归档时填写，实施者不要预填）',
       '',
       '| 条目 | 结果 | 说明 |',
       '|------|------|------|',
@@ -188,10 +188,10 @@ test('seam 4 — provisioning ships the shared graph protocol next to the skills
       '_templates/graph-queries.md',
       '_templates/work-types.md',
       '_templates/feat/spec-delta.md',
-      'sun-trellis-feat/SKILL.md',
-      'sun-trellis-check/SKILL.md',
-      'sun-trellis-before-dev/SKILL.md',
-      'sun-trellis-finish-work/SKILL.md',
+      'dsh-trellis-sun-feat/SKILL.md',
+      'dsh-trellis-sun-check/SKILL.md',
+      'dsh-trellis-sun-before-dev/SKILL.md',
+      'dsh-trellis-sun-finish-work/SKILL.md',
     ]) {
       assert.equal(existsSync(path.join(root, '.agents', 'skills', rel)), true, `missing provisioned file: ${rel}`)
     }

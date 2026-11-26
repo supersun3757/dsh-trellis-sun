@@ -1,9 +1,9 @@
 ---
-name: sun-trellis-update-spec
+name: dsh-trellis-sun-update-spec
 description: "复盘任务是否沉淀了值得写入工程规范的新认知：提炼新发现的编码模式、避免复发的踩坑教训与关键技术决策。即使结论为无需更新，也需显式走完判断逻辑。"
 ---
 
-# sun-trellis-update-spec
+# dsh-trellis-sun-update-spec
 
 在实施收尾（Phase 3 代码提交前）运行本技能，将当前任务中积累的经验与避坑教训转化为项目工程规范（Spec），沉淀为团队与 Agent 的长期资产。
 
@@ -56,7 +56,7 @@ description: "复盘任务是否沉淀了值得写入工程规范的新认知：
    - **优先更新已有权威文档**：沿 files 与根 Index 的链接确定归属，不默认另建一套平行规范；
    - **新增需要注入的文档必须同步 files**：新建应长期进入上下文的 Markdown 后，把项目根相对完整路径加入 `.trellis/doc.json` 的 files；只更新已列入文件正文无需改配置；
    - **归属不明就问**：无法判断应写 ADR、Domain、Architecture 还是 Quality 时，向用户提出一个具体选择，不静默写回旧目录；
-   - **配置无效先修复**：files 指向缺失/越界/非 Markdown，或 root 不是项目内目录时，停止写入并提示运行 `sun-trellis-spec-bootstrap`。
+   - **配置无效先修复**：files 指向缺失/越界/非 Markdown，或 root 不是项目内目录时，停止写入并提示运行 `dsh-trellis-sun-spec-bootstrap`。
 
 ## 硬性卡点
 

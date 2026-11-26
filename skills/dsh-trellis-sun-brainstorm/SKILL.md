@@ -1,9 +1,9 @@
 ---
-name: sun-trellis-brainstorm
+name: dsh-trellis-sun-brainstorm
 description: "在实施前引导协作式需求发现与方案规划：贯彻简洁设计理念，每次聚焦澄清一个核心问题，深入代码调研，收敛产出规划产物（prd.md，复杂任务辅以 design.md）。"
 ---
 
-# sun-trellis-brainstorm
+# dsh-trellis-sun-brainstorm
 
 在任务规划阶段（planning）使用本技能：明确需求与边界、编写技术设计方案、录入步骤清单，**必须获得用户明确批准后才能开始编码**。
 
