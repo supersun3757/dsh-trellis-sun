@@ -43,7 +43,7 @@ description: "在实施阶段修改代码前，研读项目规范与任务规划
 
 实施前对 `design.md` 涉及的模块查一次图，把**相关文件清单与调用边**作为实现上下文交给实现方，不让模型自己 grep 枚举：
 
-- `trace_path` / `impact`：确认改动落点上下游，列出会被波及的文件与包（写进实现说明或 review 的 Diff 范围）。
+- `detect_changes`（`--scope impact`）/ `trace_path`：确认改动落点上下游，列出会被波及的文件与包（写进实现说明或 review 的 Diff 范围）。
 - `get_architecture` / `search_graph`：确认分层边界与既有同名符号，避免重复造轮子或越层调用。
 - 索引纪律、换参重试上限、旧 daemon 坑、Qt 仓库门禁与降级口径见 `_templates/graph-queries.md`。
 - 图服务不可用时退回文本检索（`grep` / `glob` / `read`），并在实现说明里写明降级；**降级得到的范围不得表述为图查询结论**。

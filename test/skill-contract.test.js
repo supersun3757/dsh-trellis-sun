@@ -158,10 +158,15 @@ test('graph queries are an external dependency with an explicit degradation path
   const doc = read('skills/_templates/graph-queries.md')
   assert.match(doc, /外部依赖/, 'the graph service must be declared external')
   assert.match(doc, /索引纪律/)
-  assert.match(doc, /cbm-mcp-preflight/, 'the stale-daemon trap must be documented')
+  assert.match(doc, /daemon/, 'the stale-daemon trap must be documented')
+  assert.match(doc, /indexed_at/, 'the write self-check must be observable, not a fake probe')
+  assert.match(doc, /DACL/, 'the Windows environment prerequisite must be documented')
+  assert.doesNotMatch(doc, /cbm-mcp-preflight/, 'do not cite a probe binary that does not exist')
   assert.match(doc, /换参重试 2 次/, 'retry budget must be bounded')
   assert.match(doc, /降级/, 'there must be a degradation path')
   assert.match(doc, /Qt/, 'the Qt precision gate must be documented')
+  assert.match(doc, /detect_changes/, 'impact analysis is detect_changes, not a tool named impact')
+  assert.doesNotMatch(doc, /`impact`/, 'there is no tool named impact')
 
   for (const rel of [
     'skills/sun-trellis-feat/SKILL.md',

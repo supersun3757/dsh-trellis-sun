@@ -84,7 +84,7 @@ epic/多交付物 → parent + child tasks（父任务管集成验收）。
 写 `design.md` 与 `spec-delta.md` 之前先查图，把波及面写进 design，而不是凭印象列模块：
 
 - `get_architecture`：看分层与模块骨架，确认改动该落在哪一层。
-- `trace_path` / `impact`：看改动上下游与受影响包，结论写进「涉及模块与边界」。
+- `detect_changes`（`--scope impact`）/ `trace_path`：看改动上下游与受影响包，结论写进「涉及模块与边界」。
 - 索引纪律、换参重试上限、旧 daemon 坑、Qt 仓库门禁与降级口径见 `_templates/graph-queries.md`。
 - 图服务不可用时退回文本检索，并在 design 里写明「图服务不可用，改用文本检索」与未覆盖范围。
 

@@ -12,6 +12,46 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 
 ---
 
+## v1.1.2 — 2026-11-26
+
+图查询行为层第一次在真机上跑通 POC，随即暴露三处「写得很像真的、其实是编的」引用：一个不存在的工具名、一个不存在的探针二进制，以及缺少「服务根本起不来」这条最常见的前提。本版只修文本与自检口径，不动行为。
+
+## 修复
+
+- **`impact` 工具不存在**：0.12.1 二进制自报的 17 个工具里没有 `impact`，`cli impact` 直接返回 `unknown tool`。波及面统一改为 `detect_changes --scope impact`（`--direction inbound` 走调用者），`graph-queries.md`、`sun-trellis-before-dev`、`sun-trellis-feat`、`sun-trellis-check` 四处同步更正，并在文档里显式标注「没有名为 `impact` 的工具」，避免下个会话再被同一个名字带偏。
+- **删掉虚构的 `cbm-mcp-preflight` 探针**：桥接仓库 `princeofdream/dsh-codebase-memory-mcp` 只有 8 个文件（`lib/`、`cordis.patch.yml`、`package.json`），没有 `bin/`，该探针从未存在。改为三条可观察的自检：`cli list_projects` 能返回项目、`index_status --project` 的 `status`/`indexed_at`、重建索引后 `indexed_at` 是否前移。测试也从「断言文档里出现这个词」改成「断言文档里**不**出现这个词」。
+- **补上「环境前置」一节**：0.12.1 把 daemon 端点钉在 `%LOCALAPPDATA%\cbm-daemon-<hash>\`，创建前检查祖先目录 DACL。只要 `C:\Users\<你>\AppData` 上有 ACE 把 Modify 授予其它身份（沙箱组或孤儿 SID 都算），服务就直接退出（`secure daemon endpoint could not be created`），`install` 也被同一条检查拒绝。这类失败以前会被误读成「没索引」。文档现在把它单列为前置检查，并给出不改系统 ACL 的绕法（硬化 home + `USERPROFILE`/`APPDATA`/`LOCALAPPDATA`/`TEMP` 重定向）。
+
+## 文档
+
+- **POC 实测数据进文档**：对 `dsh-trellis-sun` 自身建索引 3469 节点 / 6644 边、14 秒；`trace_path` 对 `ensureProjectSkills` 返回 3 个调用者（`reseedProjectSkills`、`main`、`lib.apply`），与真实代码一致——图可作为依据，不再只是「按 README 抄的约定」。
+- **工具名全部改为二进制自报值**：`get_architecture`（`--aspects`）、`search_graph`、`trace_path`（`--direction`、`--depth`）、`detect_changes`（`--scope`），并注明裸 JSON 参数已 deprecated、应改用 `--args-file` 或管道。
+
+## 测试
+
+- `test/skill-contract.test.js` 的图查询契约改为可证伪的断言：必须出现 `daemon` / `indexed_at` / `DACL` / `detect_changes`，且**不得**出现 `cbm-mcp-preflight` 与 `` `impact` ``。
+
+---
+
+The graph-query behaviour layer got its first real-machine POC, which immediately exposed three references that read as authoritative but were invented: a tool name that does not exist, a probe binary that does not exist, and a missing description of the most common precondition — the service refusing to start at all. This release only corrects text and the self-check contract; behaviour is unchanged.
+
+## Fixed
+
+- **The `impact` tool does not exist**: the 17 tools that the 0.12.1 binary lists in `--help` do not include `impact`; `cli impact` answers `unknown tool`. Blast-radius queries now use `detect_changes --scope impact` (`--direction inbound` walks callers), corrected in `graph-queries.md`, `sun-trellis-before-dev`, `sun-trellis-feat` and `sun-trellis-check`, with an explicit note that no tool by that name exists so the next session is not misled twice.
+- **Removed the invented `cbm-mcp-preflight` probe**: the bridge repository `princeofdream/dsh-codebase-memory-mcp` holds eight files (`lib/`, `cordis.patch.yml`, `package.json`) and no `bin/`; the probe never existed. It is replaced by three observable self-checks — `cli list_projects` returning projects, `index_status --project` reporting `status`/`indexed_at`, and whether `indexed_at` advances after a re-index. The test now asserts the document does **not** mention the probe instead of asserting that it does.
+- **New "environment prerequisite" section**: 0.12.1 pins its daemon endpoint under `%LOCALAPPDATA%\cbm-daemon-<hash>\` and inspects the DACL of its ancestors before creating it. If `C:\Users\<you>\AppData` carries an ACE granting Modify to another identity — a sandbox group or an orphan SID both count — the service exits immediately (`secure daemon endpoint could not be created`) and `install` is refused by the same check. That failure used to be misread as "no index"; the document now treats it as a precondition and gives the workaround that leaves system ACLs untouched (a hardened home plus `USERPROFILE`/`APPDATA`/`LOCALAPPDATA`/`TEMP` redirection).
+
+## Docs
+
+- **POC measurements recorded**: indexing `dsh-trellis-sun` itself produced 3469 nodes / 6644 edges in 14 seconds, and `trace_path` on `ensureProjectSkills` returned three callers (`reseedProjectSkills`, `main`, `lib.apply`) matching the real code — the graph is now something to rely on rather than an agreement copied from a README.
+- **Tool names taken from the binary**: `get_architecture` (`--aspects`), `search_graph`, `trace_path` (`--direction`, `--depth`) and `detect_changes` (`--scope`), with a note that bare JSON arguments are deprecated in favour of `--args-file` or a pipe.
+
+## Tests
+
+- The graph-query contract in `test/skill-contract.test.js` is now falsifiable: the document must mention `daemon` / `indexed_at` / `DACL` / `detect_changes` and must **not** mention `cbm-mcp-preflight` or `` `impact` ``.
+
+---
+
 ## v1.1.1 — 2026-11-26
 
 修掉一批「改了但送不到」的缺陷：技能正文的修补因为没有抬版本号而对已装项目失效，安装器也没有强制重播种入口，大 review 停在名词层。
