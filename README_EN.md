@@ -15,7 +15,7 @@
 
 ---
 
-> **sun-Trellis fork** — this repo is forked from upstream `@banana-peeljj12/dsh-trellis` v0.5.1 and tracks DSH 0.2.2-rc.5 / Cordis 4.1.0. The package is published as `dsh-trellis-sun`; bundled skills are prefixed `dsh-trellis-sun-*` and bundled tools keep `dsh_trellis_sun_*` (public API, deliberately not renamed), so they coexist with an existing Trellis skill set instead of overwriting it. See [FORK.md](./FORK.md) for the divergence list.
+> **sun-Trellis fork** — this repo is forked from upstream `@banana-peeljj12/dsh-trellis` v0.5.1 and tracks DSH 0.2.2-rc.5 / Cordis 4.1.0. The package is published as `dsh-trellis-sun`; bundled skills are prefixed `dsh-trellis-sun-*` and bundled tools `dsh_trellis_sun_*`, so they coexist with an existing Trellis skill set instead of overwriting it. See [FORK.md](./FORK.md) for the divergence list.
 
 ## Overview
 

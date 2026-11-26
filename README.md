@@ -15,7 +15,7 @@
 
 ---
 
-> **sun-Trellis 分支** — 本仓库 fork 自上游 `@banana-peeljj12/dsh-trellis` v0.5.1，主线跟随 DSH 0.2.2-rc.5 / Cordis 4.1.0。包名改为 `dsh-trellis-sun`，内置技能统一为 `dsh-trellis-sun-*`，内置工具沿用 `dsh_trellis_sun_*`（对外 API，不改名），可与项目中已有的 Trellis 技能并存而不互相覆盖。与上游的差异清单见 [FORK.md](./FORK.md)。
+> **sun-Trellis 分支** — 本仓库 fork 自上游 `@banana-peeljj12/dsh-trellis` v0.5.1，主线跟随 DSH 0.2.2-rc.5 / Cordis 4.1.0。包名改为 `dsh-trellis-sun`，内置技能统一为 `dsh-trellis-sun-*`，内置工具统一为 `dsh_trellis_sun_*`，可与项目中已有的 Trellis 技能并存而不互相覆盖。与上游的差异清单见 [FORK.md](./FORK.md)。
 
 ## 项目简介
 
