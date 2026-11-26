@@ -1,0 +1,94 @@
+{
+  "title": "v1.1.1 交付完整性：版本标记失效、缺强制重播种入口、大 review 无可执行定义",
+  "status": "in_progress",
+  "work": {
+    "type": "issue",
+    "mode": "quick",
+    "stage": "fix-note",
+    "execution_lane": "quick"
+  },
+  "description": "修复审计发现的一批「改了但送不到」缺陷：(1) d26cb1c 改了 skills/** 却没抬 package.json 版本，已播种 1.1.0 的项目永远走 present 跳过分支，收不到「无 spec-delta 也继续收尾」的保护；(2) install.mjs 从不调用 ensureProjectSkills 且无 --reseed，重播种只能手工删 .trellis-version；(3) work-types.md 的大 review 只给了工具名，没有入口检查/调用定义/降级口径；(4) aeabf38 的安装器修复与 4 个测试没有版本条目，CHANGELOG.md 不在 files 白名单；(5) v1.1.0 tag 与 main 分叉（aeabf38 不在 tag 内）。",
+  "steps": [
+    {
+      "id": "version-bump",
+      "title": "抬版本到 1.1.1 并回填 CHANGELOG 条目",
+      "status": "completed",
+      "spec": "package.json version 1.1.0 -> 1.1.1；CHANGELOG 顶部新增 `## v1.1.1 — 2026-11-26` 中英双语条目，先列格式约定要求的分组（修复/兼容性/测试）。",
+      "acceptance": [
+        "package.json version 为 1.1.1",
+        "已播种 .trellis-version=1.1.0 的项目在下次运行时会进入 isUpgrade 分支（15 个技能目录进 updated）",
+        "CHANGELOG 新增条目符合文件头部的双语分组模板"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "package.json 1.1.1；对真实演练项目跑 --reseed：15 个技能目录全部进入 updated、present 为 0、marker 变 1.1.1；CHANGELOG 新条目经 scripts/extract-changelog.mjs v1.1.1 抽出 3778 字符双语正文。"
+    },
+    {
+      "id": "reseed-entry",
+      "title": "安装器新增 --reseed / --project，复用 ensureProjectSkills",
+      "status": "completed",
+      "spec": "scripts/install.mjs 增加 node:fs 版 FileSystem 适配器（resolve/stat/readText/listDir/writeText）并以 force:true 调 lib/skills.js 的 ensureProjectSkills；CLI 增加 --reseed（布尔）与 --project <dir>（默认 process.cwd()）；--dry-run 时只打印将写入的文件数不落盘；未知参数行为不变。",
+      "acceptance": [
+        "在已播种项目上 --reseed 会覆写 15 个技能目录并把 marker 写成当前版本",
+        "--project 指定目录时只该目录被写入，cwd 不受影响",
+        "--dry-run 不产生任何磁盘写入",
+        "新增测试覆盖上述三条，且不引入运行时依赖"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "6 个新用例全绿：覆写+marker、dry-run 零写入、全新项目补齐、缺失项目根报错、参数解析与未知参数回退帮助、适配器缺失路径返回 null。真机 --dry-run 与实跑均在 %TEMP%\\trellis-e2e-proj 验证；--reseed 在 profile 解析之前处理，不依赖 profile。"
+    },
+    {
+      "id": "big-review-definition",
+      "title": "work-types.md 补大 review 的可执行定义与降级口径",
+      "status": "completed",
+      "spec": "在 skills/_templates/work-types.md 的「Review 节奏」小节补：入口检查命令（能否解析到 ocr 可执行文件）、delegate 模式的执行口径（由会话模型按固定清单审、代码不外发）、产物落点与记录要求、工具缺失时的降级清单；不发明该工具不存在的 flag。",
+      "acceptance": [
+        "读者照着文本能判断「现在能不能跑大 review」",
+        "工具缺失时有明确降级动作与记录口径，不留空转",
+        "与 graph-queries.md 的降级范式一致（写明未覆盖范围）"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "命令取自 npm 包实际 README（bin 名 ocr；`ocr delegate rule <files>`、`ocr review`/`ocr scan` 为 native 模式需 provider），未虚构 flag；新增 5 项固定降级清单 + 「未执行 + 未覆盖范围」记录口径，与 graph-queries.md 同构。播种后文本已在演练项目生效。"
+    },
+    {
+      "id": "changelog-and-package",
+      "title": "CHANGELOG 回填 + CHANGELOG.md 进 files",
+      "status": "completed",
+      "spec": "package.json files 增加 CHANGELOG.md；新增 v1.1.1 条目（329 → 344、15 个新用例、含安装器 YAML 修复与 --reseed）；v1.1.0 条目保持 318 → 329 不变（对应不可变的 tag）。",
+      "acceptance": [
+        "CHANGELOG 中不再出现与实际测试数不符的数字",
+        "npm pack --dry-run 的文件清单包含 CHANGELOG.md"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "npm pack --dry-run：version 1.1.1、total files 55、含 CHANGELOG.md 97.5kB；v1.1.0 条目改为 318 → 333 / 15 个测试并补 ## 修复 / ## Fixed。"
+    },
+    {
+      "id": "verify-and-tag",
+      "title": "全量回归 + 提交 + tag 理顺",
+      "status": "pending",
+      "spec": "node --test 全绿；git diff --check 干净；独立 check 子代理无 blocking；提交后为 v1.1.1 打 annotated tag 并推送（不发 GitHub Release）。v1.1.0 已推送且为 annotated tag，不改写——安装器 YAML 修复归入 1.1.1 条目（见 fix-note 的 tag 处置）。",
+      "acceptance": [
+        "node --test 全绿且 fail 为 0",
+        "v1.1.0 保持指向 d26cb1c（package.json version=1.1.0，自洽）",
+        "v1.1.1 指向新提交且 package.json version=1.1.1",
+        "main 与 origin/main 同步，tag 与远端一致"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": false,
+      "verifiedBy": "",
+      "verificationNotes": ""
+    }
+  ]
+}

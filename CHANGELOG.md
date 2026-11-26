@@ -12,6 +12,46 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 
 ---
 
+## v1.1.1 — 2026-11-26
+
+修掉一批「改了但送不到」的缺陷：技能正文的修补因为没有抬版本号而对已装项目失效，安装器也没有强制重播种入口，大 review 停在名词层。
+
+## 修复
+
+- **抬版本让技能补给真正送达**：1.1.0 之后改过 `skills/**`（收尾时「没有 `spec-delta.md` 就继续」的保护）却没动 `package.json`，而播种按 `.trellis-version` 判定、同版本直接跳过，已播种 1.1.0 的项目永远收不到该修复。版本抬到 1.1.1 后，这些项目下次运行即进入覆写分支。
+- **安装器不再写出非法 YAML**：`cordis.patch.yml` 行内字符串改为双引号标量并转义，`C:\Users\...` 里的 `\U` 不再是非法转义——此前整个 profile overlay 解析失败，Windows 上直接起不来。安装器此前零测试覆盖，本次补上 4 个用例。
+- **安装器新增 `--reseed` / `--project`**：强制把包内技能重新播种到项目 `.agents/skills` 并更新标记；内部复用 `lib/skills.js` 的 `ensureProjectSkills`（经 `node:fs` 适配器），不复制第二套播种逻辑。`--dry-run` 只预览不写盘；`--reseed` 在 profile 解析之前处理，因此不依赖 profile。
+- **大 review 从名词变成可执行定义**：`_templates/work-types.md` 补上入口检查（`npx --yes @alibaba-group/open-code-review --version`）、`delegate` 模式的取值与执行口径（`ocr delegate rule <改动文件...>` 取规则、由会话模型逐条执行）、`native` 模式需用户显式授权并记录，以及工具缺失时的 5 项固定降级清单与「未执行 + 未覆盖范围」的记录要求。
+- **纠正误导性注释**：安装器头部声称「包内 `postinstall` 会自动接线」，实际 `package.json` 没有 `postinstall`，现改为明确要求手动执行 `sun-trellis-install`。
+- **`--dry-run` 不会误删文件**：废弃模板清理走的是裸 `fs.unlinkSync`，写入适配器拦不住，`ensureProjectSkills` 因此新增 `dryRun` 参数（预览时只报告、不删除），`--reseed` 会透传；结果里也补上了过去被丢弃的 `pruned` 列表。
+- **`CHANGELOG.md` 进 `files` 白名单**：此前 `FORK.md` 与两个 README 随包分发，唯独发布记录不进包。
+
+## 测试
+
+- 新增 15 个安装器测试（4 个 YAML 转义 + 11 个 `--reseed` / CLI 接缝）：覆写陈旧技能正文并更新标记、`--dry-run` 零写入、`--dry-run` 不误删废弃模板、全新项目补齐、项目根缺失 / 不是目录时拒绝、`--reseed` / `--project` 参数解析、适配器对缺失路径返回 `null`，以及三条**真正启动脚本**的接缝用例（`--reseed` 不需要 profile、`--project` 缺值不回落 cwd、一次只能用一模式）。`node --test` 329 → 344 全绿。
+- 真机验证：对已播种的演练项目跑 `--reseed`，15 个技能目录全部进入覆写分支，`.trellis-version` 由 `1.1.0` 变为 `1.1.1`，新的大 review 文本出现在播种后的 `_templates/work-types.md`。
+
+---
+
+Fixes a batch of "changed but never delivered" defects: the skill-text patch never reached installed projects for lack of a version bump, the installer had no forced re-provisioning entry point, and the big review stopped at being a noun.
+
+## Fixed
+
+- **Version bump so skill patches actually land**: skill text under `skills/**` was changed after 1.1.0 (the "no `spec-delta.md`, keep closing" protection) without touching `package.json`; provisioning is version-gated and skips on an equal version, so a project already stamped 1.1.0 would never receive it. Raising the version to 1.1.1 puts those projects on the overwrite path at their next run.
+- **The installer no longer emits invalid YAML**: strings in the `cordis.patch.yml` row are emitted as double-quoted scalars with escaping, so the `\U` inside `C:\Users\...` is not read as an illegal YAML escape — previously the whole profile overlay failed to parse and the profile would not boot on Windows. The installer had no test coverage at all; four cases now cover it.
+- **Installer gains `--reseed` / `--project`**: force re-provision the bundled skills into a project's `.agents/skills` and refresh the marker. It reuses `lib/skills.js` `ensureProjectSkills` through a `node:fs` adapter instead of growing a second provisioning logic. `--dry-run` previews only; `--reseed` is handled before profile resolution, so it does not need a profile.
+- **The big review is now executable**: `_templates/work-types.md` documents the availability check (`npx --yes @alibaba-group/open-code-review --version`), how to obtain rules in `delegate` mode (`ocr delegate rule <changed files...>`, executed item by item by the session model), that `native` mode needs explicit user authorisation plus a record, and the five-item fixed checklist plus "not executed + uncovered scope" record required when the tool is missing.
+- **Corrected a misleading comment**: the installer header claimed a bundled `postinstall` hook wires everything automatically; `package.json` has none. It now states the step is explicit (`sun-trellis-install`).
+- **`--dry-run` never deletes by accident**: the deprecated-template prune is a bare `fs.unlinkSync`, which a write-suppressing adapter cannot intercept, so `ensureProjectSkills` gained a `dryRun` option (preview reports, never deletes) which `--reseed` forwards; the result now also carries the `pruned` list that used to be discarded.
+- **`CHANGELOG.md` is in the `files` allowlist**: `FORK.md` and both READMEs shipped before, but the release record did not.
+
+## Tests
+
+- Fifteen new installer tests (four YAML-escaping, eleven `--reseed` / CLI-seam): overwriting stale skill text and refreshing the marker, zero writes under `--dry-run`, `--dry-run` leaving deprecated templates alone, provisioning a project that has no `.agents/skills` yet, refusing a missing or non-directory project root, parsing `--reseed` / `--project`, the `node:fs` adapter returning `null` for a missing path, plus three cases that **spawn the real script** (reseed needs no profile, a valueless `--project` does not fall back to cwd, one mode per invocation). `node --test` goes from 329 to 344, all green.
+- Verified on a real project: running `--reseed` against an already-seeded drill project put all fifteen skill directories on the overwrite path, moved `.trellis-version` from `1.1.0` to `1.1.1`, and the new big-review text appeared in the provisioned `_templates/work-types.md`.
+
+---
+
 ## v1.1.0 — 2026-11-25
 
 把外部工具的三套机制抄进 skill 文本（spec-delta / code review / 图查询），并补齐它们与既有流程的接缝：行为层进 skill，外部依赖不进包。
@@ -21,7 +61,7 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 - **feat 轨道引入 `spec-delta`**：design 阶段与 `design.md` 同批产出 `spec-delta.md`（`ADDED` / `MODIFIED` / `REMOVED`，逐条写明目标文件、章节定位与旧文本），**两者同时 approved 才进 impl**；`sun-trellis-finish-work` 归档前逐条机械合并进常驻 spec——旧文本必须与目标文件逐字一致、锚点必须存在且不重复，否则**停下询问，禁止静默合并**；合并记录写回产物并随业务代码同批提交。与 `sun-trellis-update-spec` 的「实施教训」明确分工：delta 是改动本身的契约增量，lesson 是事后复盘。
 - **check 阶段补齐 code review 机制**：改动集由 `git diff` / `git status` **确定性算出**（不许模型凭印象列文件）、按路径解析适用规则、逐文件「覆盖清单」（漏一个不许收工）、工具失败一律 **fail-closed**（非零退出 / 空输出 / 截断 / 取消都算错误，不得报「干净」）。受影响包用图查询枚举，不靠 grep 猜范围。
 - **review 阶段改为证据型工作流**：固定 git 快照后再评审、证据三要素（文件:行号 + 引用原文 + 复现输出）、证据不足降级为「疑似 / 未验证」、增量复查只扫新增变化且问题用稳定编号（R1、R2…）保留历轮状态、3 轮不收敛转人工。
-- **两级 review 节奏**：开发中走小 review（管深，随任务），版本冻结时跑 OCR 打板大 review（管广，`delegate` 模式；OCR 二进制不进包，`managed` 模式禁用以免代码外发）。
+- **两级 review 节奏**：开发中走小 review（管深，随任务），版本冻结时跑 OCR 打板大 review（管广；OCR 不进包，`delegate` 模式由会话模型审、代码不外发，`native` 模式要先配 OCR 侧 provider、代码会外发，仅在用户显式授权时使用）。
 - **图查询行为层接入 `codebase-memory-mcp`**：design 阶段先查分层与波及面再写方案、`sun-trellis-before-dev` 用图上下文（相关文件与调用边）替代 grep 枚举、check 用 `trace_path` / `impact` 枚举受影响包；新增共享协议 `skills/_templates/graph-queries.md`（索引纪律、换参重试上限 2 次、升级后旧 daemon 锁写的坑、Qt 仓库门禁、服务缺失时的降级口径）。
 
 ## 兼容性
@@ -44,7 +84,7 @@ Ports three external mechanisms into the skill text (spec-delta / code review / 
 - **`spec-delta` on the feat track**: the design stage now produces `spec-delta.md` alongside `design.md` (`ADDED` / `MODIFIED` / `REMOVED`, each naming its target file, section anchor and old text), and **both must be approved** before impl. `sun-trellis-finish-work` merges the approved delta into the resident specs verbatim — the old text must match byte-for-byte and anchors must exist without duplication, otherwise it **stops and asks instead of merging silently**; the merge record is written back and committed together with the business code. It is explicitly distinct from `sun-trellis-update-spec`: a delta is the contract increment of the change itself, a lesson is post-hoc reflection.
 - **Code review mechanics on the check side**: the change set is computed deterministically from `git diff` / `git status` (never listed from memory), rules are resolved by path, every changed file needs a verdict in the coverage list (no gaps allowed), and tool failures are **fail-closed** (non-zero exit / empty output / truncation / cancellation are errors, never "clean"). Affected packages are enumerated from the graph, not guessed with grep.
 - **Review stage is now evidence-based**: review against a pinned git snapshot, the three-part evidence rule (file:line + quoted source + reproducing output), weak evidence downgraded to "suspected / unverified", incremental re-reviews limited to new changes with stable issue numbers (R1, R2…) carrying their state across rounds, and escalation to a human after 3 non-converging rounds.
-- **Two-level review cadence**: a small in-flight review (deep, per task) plus an OCR sweep at version freeze (broad, `delegate` mode; the OCR binary is not bundled and `managed` mode is banned so code never leaves the machine).
+- **Two-level review cadence**: a small in-flight review (deep, per task) plus an OCR sweep at version freeze (broad; OCR is not bundled — its `delegate` mode is reviewed by the session model and keeps code on the machine, while `native` mode requires a provider configured inside OCR and therefore sends code out, so it is used only with explicit user authorisation).
 - **Graph query behaviour layer for `codebase-memory-mcp`**: design queries layering and blast radius before writing the plan, `sun-trellis-before-dev` hands the implementation a graph context instead of grep enumeration, and check enumerates affected packages via `trace_path` / `impact`. A shared protocol `skills/_templates/graph-queries.md` documents index hygiene, the 2-retry parameter-switch budget, the stale-daemon write-lock trap, the Qt gate and the degradation path.
 
 ## Compatibility

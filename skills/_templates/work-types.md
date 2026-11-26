@@ -52,11 +52,34 @@ Trellis 核心三类工作流。
 | 级别 | 时机 | 范围 | 执行 |
 |------|------|------|------|
 | 小 review | 开发中，随任务走（review / check 阶段） | 深：业务逻辑对不对、验收标准满没满足、spec-delta 是否落地 | 独立子代理按证据型工作流写 `review.md` + `sun-trellis-check` |
-| 大 review（打板） | 开发完成、版本冻结时 | 广：跨模块一致性、积累的规则型问题与残渣 | OCR（`@alibaba-group/open-code-review`）全量扫，`delegate` 模式 |
+| 大 review（打板） | 开发完成、版本冻结时 | 广：跨模块一致性、积累的规则型问题与残渣 | 入口检查 → `ocr delegate rule` 取规则 → 会话模型审（见下） |
 
 - 小 review 不攒问题：类型、风格、明显 bug 顺手清掉，不等打板。
-- 大 review 是**外部依赖**（OCR 二进制不进本插件）；默认 `delegate` 模式由会话模型审，**禁用 managed 模式**（代码不外发端点）。
-- 大 review 结论落版本记录（journal / release notes），**不改本插件的验证门禁**（verified / human 两档）。
+
+### 大 review 怎么跑（可执行定义）
+
+大 review 是**外部依赖**：OCR（npm 包 `@alibaba-group/open-code-review`，CLI 名 `ocr`）不进本插件。
+按三步走，每一步都有可判定的结果：
+
+1. **入口检查**（只判「有没有」，不负责安装）：
+   `npx --yes @alibaba-group/open-code-review --version`——能打印版本号才算可用；本机全局装过就直接 `ocr --version`。
+2. **取值再评审**（delegate 模式，代码不外发）：
+   `ocr delegate rule <改动文件...>` 取出这批文件的规则与检查项，**由本会话模型**逐条执行、定位、写结论。
+   跑之前**不要**配置 OCR 自己的 provider——那是 native 模式（`ocr review` / `ocr scan`）的前置，
+   会把代码发给 OCR 侧配置的模型，与本项目「代码不外发」的取舍冲突。
+   确需 native 模式时，必须由用户显式授权，并把授权记在版本记录里。
+3. **落结论**：结论写进版本记录（journal / release notes），**不改本插件的验证门禁**（verified / human 两档）。
+
+**工具不可用时的降级**（不许空转，也不许假装跑过）：第 1 步失败即按下面固定清单用文本检索过一遍，
+并在版本记录里写明「大 review 未执行（ocr 不可用：<原因>）」+ 未覆盖范围（与 `graph-queries.md` 的降级口径一致）：
+
+| 固定检查项 | 怎么查 |
+|---|---|
+| 跨模块契约一致（同名工具 / 字段 / 错误码两边定义一致） | 按符号名全仓检索，逐个比对签名与文档描述 |
+| 技能文本与实现不矛盾（写了没做 / 做了没写） | 对照 `lib/**` 的导出与 `skills/**` 的表述 |
+| 版本与分发一致（`package.json` / `.trellis-version` / tag / CHANGELOG） | 比对四处版本号与 CHANGELOG 条目 |
+| 死引用与残渣（指向已删除文件或下线接口） | 检索路径与工具名，逐个确认目标仍存在 |
+| 零依赖约束（是否引入运行时 dep） | 查 `dependencies` 与实际 `import` 来源 |
 
 ## 路由
 

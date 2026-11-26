@@ -31,16 +31,23 @@
  * deliberately does not emit: doing so next to an existing bundle entry would
  * load the plugin twice.
  *
- * After a successful run, restart the DSH process for the profile. The package
- * `postinstall` hook invokes this script with `--auto` (safe, idempotent, and
- * skippable via `TRELLIS_SKIP_AUTO=1`), so a normal install of this package
- * wires the injection layer with no extra step.
+ * After a successful run, restart the DSH process for the profile. This package
+ * ships no `postinstall` hook: installing it never wires a profile on its own,
+ * so the step is explicit — run `sun-trellis-install` (this script) or
+ * `node scripts/install.mjs --profile <name>`. `--auto` exists for callers that
+ * want the idempotent path and quietly no-op when no profile matches; it is
+ * skipped entirely when `TRELLIS_SKIP_AUTO=1`.
+ *
+ * Project-level skill provisioning is a separate, session-time concern
+ * (lib/skills.js). `--reseed` forces it from the CLI; see the reseed section
+ * below.
  */
 
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { ensureProjectSkills } from '../lib/skills.js'
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PLUGIN_ID = 'trellis-workflow'
@@ -62,8 +69,11 @@ function parseArgs(argv) {
     uninstall: false,
     fixDeps: false,
     patchHarness: false,
+    reseed: false,
+    project: null,
     dryRun: false,
     help: false,
+    error: null,
   }
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
@@ -98,6 +108,20 @@ function parseArgs(argv) {
       case '--patch-harness':
         args.patchHarness = true
         break
+      case '--reseed':
+        args.reseed = true
+        break
+      case '--project': {
+        // A missing value must not silently fall through to cwd: cwd is a
+        // write target here, not a neutral default.
+        const value = argv[++i]
+        if (value === undefined || value.startsWith('--')) {
+          args.error = '--project 缺少取值（项目根目录）'
+          break
+        }
+        args.project = value
+        break
+      }
       case '--dry-run':
         args.dryRun = true
         break
@@ -126,10 +150,16 @@ trellis-workflow 注入层一键安装器
   --inject-step <n>     只在该步注入（默认 1）
   --skip-keywords a,b   出现这些词的本轮跳过注入
   --inline              按 codex-inline 调度模式解析阶段
-  --auto                幂等自动模式（postinstall 使用；无法识别时静默退出）
+  --auto                幂等自动模式（给需要「识别不到就静默退出」的调用方用；
+                        本包没有 postinstall，装完不会自动接线）
   --dry-run             只预览将发生的改动，不写盘
   --uninstall           一步卸载：配置行 + 依赖 junction + package.json 依赖项
   --fix-deps            清理 package.json 中指向不存在路径的 trellis link 依赖
+  --reseed              强制把包内技能重新播种到项目 .agents/skills（覆写同名技能、
+                        更新 .trellis-version、清理废弃模板）；**会写入目标目录**，
+                        与 profile 接线无关，不能与 --uninstall / --fix-deps /
+                        --patch-harness / --auto 同时使用
+  --project <dir>       --reseed 的目标项目根（默认 cwd）
   -h, --help            显示本帮助
 
 DSH 0.1.7 起 settings 由 Loader 条目驱动：Web 设置表单即条目 Config（命名空间为
@@ -543,14 +573,85 @@ function removeTrellisDeps(profileDir, dryRun) {
 }
 
 // ---------------------------------------------------------------------------
+// project-level skill reseeding (--reseed)
+//
+// Provisioning normally happens at session start (lib/skills.js
+// ensureProjectSkills) and only rewrites when the project's `.trellis-version`
+// differs from the package version. That leaves no explicit way to force it —
+// e.g. to repair a marker that is ahead, or to verify a skill-text change
+// before the version bump lands. `--reseed` reuses the *same* implementation
+// through a node:fs FileSystem adapter, so the install-time and runtime entry
+// points can never diverge into two provisioning logics.
+// ---------------------------------------------------------------------------
+
+/** Minimal `ctx.fs`-shaped adapter over node:fs (the surface skills.js uses). */
+function nodeFsFileSystem({ dryRun = false } = {}) {
+  return {
+    resolve: async (p) => path.resolve(p),
+    stat: async (p) => {
+      try {
+        return fs.statSync(p)
+      } catch {
+        return null
+      }
+    },
+    readText: async (p) => fs.readFileSync(p, 'utf8'),
+    listDir: async (dir) => fs.readdirSync(dir, { withFileTypes: true }).map((entry) => ({ name: entry.name })),
+    writeText: async (target, content) => {
+      if (dryRun) return
+      fs.mkdirSync(path.dirname(target), { recursive: true })
+      fs.writeFileSync(target, content)
+    },
+  }
+}
+
+/**
+ * Force-provision the bundled skills into a project's `.agents/skills`.
+ * @param {string} projectRoot project root (default: cwd at the CLI).
+ * @param {{ dryRun?: boolean }} [opts]
+ * @returns {Promise<{ ok: boolean, message: string, result?: object }>}
+ */
+async function reseedProjectSkills(projectRoot, { dryRun = false } = {}) {
+  const root = path.resolve(projectRoot)
+  if (!fs.existsSync(root)) return { ok: false, message: `项目目录不存在: ${root}` }
+  if (!fs.statSync(root).isDirectory()) return { ok: false, message: `项目根不是目录: ${root}` }
+  const result = await ensureProjectSkills(nodeFsFileSystem({ dryRun }), root, { force: true, dryRun })
+  const tag = dryRun ? '[dry-run] ' : ''
+  const list = (names) => (names.length ? names.join(', ') : '（无）')
+  const message = [
+    `${tag}项目:     ${root}`,
+    `${tag}技能目录: ${path.join(root, '.agents', 'skills')}`,
+    `${tag}目标版本: ${result.version}`,
+    `${tag}新增:     ${list(result.copied)}`,
+    `${tag}覆写:     ${list(result.updated)}`,
+    `${tag}保留:     ${result.present.length} 个（force 下应为 0）`,
+    `${tag}清理:     ${list(result.pruned)}`,
+  ].join('\n')
+  return { ok: true, message, result }
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 
-function main() {
+async function main() {
   const args = parseArgs(process.argv.slice(2))
+if (args.error) {
+  console.error(args.error)
+  process.exit(1)
+}
 if (args.help) {
   printHelp()
   process.exit(0)
+}
+// One mode per invocation: each of these does something different to the
+// profile or the tree, so picking one silently would hide the other request.
+// (`--dry-run` and `--project` are modifiers, not modes.)
+const MODE_FLAGS = { uninstall: '--uninstall', fixDeps: '--fix-deps', patchHarness: '--patch-harness', auto: '--auto', reseed: '--reseed' }
+const requested = Object.keys(MODE_FLAGS).filter((key) => args[key])
+if (requested.length > 1) {
+  console.error(`一次只能用一个模式：${requested.map((key) => MODE_FLAGS[key]).join(' / ')}`)
+  process.exit(1)
 }
 if (process.env.TRELLIS_SKIP_AUTO === '1' && args.auto) {
   console.log('TRELLIS_SKIP_AUTO=1，跳过自动安装')
@@ -561,6 +662,13 @@ if (args.patchHarness) {
   // the generated remote.settings namespace — no harness allowlist patch.
   console.log('DSH 0.1.7 起 Web 设置由 Loader 条目驱动（remote.settings），无需再补丁 harness 白名单。')
   process.exit(0)
+}
+if (args.reseed) {
+  // Project-level operation: it must not depend on profile detection, so it
+  // runs (and exits) before the profile is resolved.
+  const reseed = await reseedProjectSkills(args.project || process.cwd(), { dryRun: args.dryRun })
+  console.log(reseed.message)
+  process.exit(reseed.ok ? 0 : 1)
 }
 
 const home = dshHome()
@@ -646,8 +754,11 @@ process.exit(ok ? 0 : 1)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  main()
+  main().catch((err) => {
+    console.error(err && err.message ? err.message : err)
+    process.exit(1)
+  })
 }
 
 // exported for regression testing (importing this module must not run main())
-export { buildRow, hasRow, insertRow, patchPatchFile, patchHarnessAllowlist, removeLink, removeRow, removeTrellisDeps, unpatchHarnessAllowlist, uninstallRow }
+export { buildRow, hasRow, insertRow, patchPatchFile, patchHarnessAllowlist, removeLink, removeRow, removeTrellisDeps, unpatchHarnessAllowlist, uninstallRow, parseArgs, nodeFsFileSystem, reseedProjectSkills }
