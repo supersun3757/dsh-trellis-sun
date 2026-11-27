@@ -2,11 +2,13 @@
 
 <div align="center">
   <b style="font-size: 1.3em;">Trellis Workflow Extension for DeepSeek Harness</b><br />
-  <sub>Structured Stage Progression · Step State Machine · Verification Quality Gates · Optional Read-Only Planning</sub><br /><br />
+  <sub>Structured Stage Progression · Step State Machine · Verification Gates · Spec-Delta Merge · Evidence-Based Review · Optional Read-Only Planning</sub><br /><br />
   <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
   <img alt="Node Version" src="https://img.shields.io/badge/Node.js-≥20-green.svg" />
   <img alt="Step State Machine" src="https://img.shields.io/badge/Steps-5--State%20Machine-blue.svg" />
   <img alt="Verification Gate" src="https://img.shields.io/badge/Gate-Verified%20Check-success.svg" />
+  <img alt="Spec Delta" src="https://img.shields.io/badge/Spec--Delta%20Merged-purple.svg" />
+  <img alt="Evidence Review" src="https://img.shields.io/badge/Review-Evidence--Based-orange.svg" />
 </div>
 
 <div align="center">
@@ -39,6 +41,10 @@ In complex, multi-turn AI coding workflows, typical pain points include:
 - **Session-Level Isolation**: Session pointers are stored independently under `.trellis/.runtime/sessions/`, preventing multi-session or subagent race conditions.
 - **Dual-Mode Task Board (Visual Language v2)**: A compact task popover by default (active bound task pinned at the top as a hero card with an inline step checklist; open tasks grouped cleanly by status below), expanding into a full-screen board (tasks grouped by In Progress / Planning / Completed with `⌘K` search and workflow filters); the right-hand details drawer provides a **Step Tracker checklist**, stage track nodes, and an artifact file list. The board adheres to a **single-accent color system** and **restrained interaction** — it never mutates task state directly; the only advance path is the **Advance Task** button injecting an instruction into the composer for the Agent to execute, and artifact clicks produce native `@.trellis/tasks/...` file references handled by DSH.
 - **Git Cleanliness Check (scoped mode supported)**: Automatically verifies that the Git working tree is clean and committed before closing or archiving a task. When the working tree contains uncommitted changes unrelated to the current task, pass the task's actual changed files via `modified_files` to `dsh_trellis_sun_task_update` / `dsh_trellis_sun_task_archive`: the check then scopes to those files (which must themselves be committed), and uncommitted changes outside the list only emit a warning instead of blocking. Omitting the parameter keeps the global strict check.
+- **Incremental Spec Proposals (`spec-delta`)**: the feat `design` stage produces `spec-delta.md` next to `design.md` — ADDED / MODIFIED / REMOVED entries describing what this change adds to the resident spec — and **both must be approved before `impl`**. At archive time `dsh-trellis-sun-finish-work` merges each entry verbatim: the old text must match the target file character for character and section anchors must exist and stay unique, otherwise it **stops and asks** instead of merging silently. This is a different artefact from the post-implementation lessons captured by `update-spec`.
+- **Auditable check & evidence-based review**: the check change set is computed deterministically from `git diff` (never from memory), rules are resolved path by path, every changed file needs a verdict in the coverage list, and tool failures are reported as errors rather than as "clean". Reviews run on a pinned Git snapshot and require file:line + quoted source + actual output; weak evidence is downgraded to "suspected" and non-convergence escalates to a human after 3 rounds. Two levels: a per-task small review (depth) and a version-freeze big review (breadth) that calls an external OCR tool — the mechanics are copied into the skill text, the tool is not bundled.
+- **Graph queries as an external dependency**: optionally mount `codebase-memory-mcp` through DSH's built-in MCP client to look up layering and blast radius at design, module context before implementation, and affected packages during check. The shared protocol lives in `skills/_templates/graph-queries.md` (index hygiene, bounded retries, the stale-daemon and Windows DACL traps, degradation rules). Without the service, without an index, or on query failure it degrades to text search; Qt parsing precision is untested and not claimed.
+- **Tiered artifact whitelist**: the deliverable channel only advertises the 10 artifacts current workflows produce, while 4 retired names (`implement.md` / `checklist.yaml` / `check.md` / `design-review.md`) stay writable so historical tasks remain updateable. The tool description separates the two tiers, so a new task never aims at a name that seeding prunes.
 
 ---
 
@@ -67,6 +73,20 @@ After installation, **restart the DSH service**.
 > For a local development checkout, install it as `link:<absolute repo path>`. Afterwards
 > **fully quit and relaunch the desktop app** (including the tray icon — confirm no
 > `DeepSeek Harness.exe` remains in Task Manager) for the change to take effect.
+
+> **After upgrading the plugin or editing its skills, the copies inside a project do not update by themselves.**
+> Seeding is gated on the project's `.agents/skills/.trellis-version` marker — an unchanged version is skipped
+> entirely (otherwise every startup would overwrite the tree). So after swapping the package or changing
+> `skills/**`, pick one:
+>
+> ```sh
+> # A) force a re-seed into one project (overwrites same-named skills/templates, prunes retired ones)
+> node scripts/install.mjs --reseed --project <project root>
+> # preview the change set first: append --dry-run
+> ```
+>
+> B) bump `package.json`'s version and restart the host — already-seeded projects then take the overwrite
+> branch. `--reseed` cannot be combined with `--uninstall` / `--fix-deps` / `--patch-harness` / `--auto`.
 
 > **Version compatibility**: the `@deepseek-ai/dsh-*` peer ranges a plugin declares must cover
 > the running DSH version. DSH validates those ranges both in the install preflight (before pnpm
@@ -110,6 +130,8 @@ The plugin provides three standard tracks mapped to the task stage (`work.stage`
 | **Issue (`issue`)** | `issue-MM-DD-name` | `report` → `analyze` → `fix` → `fix-note` | For bug diagnosis, fixing anomalies, and regression testing |
 | **Refactor (`refactor`)** | `refactor-MM-DD-name` | `scan` → `design` → `apply` → `done` | For behavior-preserving optimizations and cleanups |
 
+> **Spec delta**: the feat `design` stage produces both `design.md` and `spec-delta.md`, and both must be `approved` before `impl`; at archive time `dsh-trellis-sun-finish-work` merges the delta into the resident spec before committing and archiving. A quick change that touches no spec states `No delta: <reason>` instead.
+
 ---
 
 ## Key Mechanisms
@@ -128,6 +150,7 @@ The `steps` array in `task.json` serves as the execution list and supports 5 sta
 - **Automated Verification (`verification: 'ai'`)**: The model must run test commands and record `verified: true` with `verificationNotes` evidence via `dsh_trellis_sun_task_update` in an initial call before the step can be marked `completed` in a subsequent call.
 - **Human Approval Gate (`verification: 'human'`)**: Reserved for critical or high-risk changes. The step cannot be marked `completed` unless confirmed by the user and saved with `verifiedBy: 'human'`.
 - **Completion Audit**: When closing or archiving a task, the plugin validates that all steps are completed and verified, and that the Git working tree is clean.
+- **The gate only trusts persisted state**: completion checks read the `verification` and `verified` values **already on disk**. Downgrading `verification` and setting `completed` in the same call, or writing `verified: true` in that same call, is rejected — it takes two calls. Replacing `steps` wholesale is validated against the persisted list, so a `{status: 'completed', steps: []}` shortcut no longer passes.
 
 ### 2. Dual-Mode Task Board (Compact Popover & Full-Screen Board)
 
@@ -167,13 +190,58 @@ When `enforceReadonlyPlanning: true` is configured, the plugin TRIMS ONLY the sp
 
 ---
 
+### 4. Deliverables and the Artifact Whitelist
+
+Deliverable documents in a task directory can only be written through `dsh_trellis_sun_artifact_update`, under two constraints: the file name must be whitelisted, and the path must be a direct child of the active task directory (the slug charset is defined once for the whole repo — `.`, `..` and slugs containing separators are rejected).
+
+The whitelist has two tiers:
+
+| Tier | Contents | Purpose |
+|---|---|---|
+| Current outputs (10) | `prd.md`, `design.md`, `spec-delta.md`, `review.md`, `report.md`, `analysis.md`, `fix-note.md`, `scan.md`, `refactor-design.md`, `apply-notes.md` | Each ships a template and belongs to a stage; the tool description presents these as the targets |
+| Retired names (4) | `implement.md`, `checklist.yaml`, `check.md`, `design-review.md` | No current workflow produces them and their templates are pruned, but historical tasks still contain them, so they stay writable instead of turning old tasks read-only |
+
+A contract test pins both directions: every current name ships a template, every retired name ships none and is still accepted.
+
+### 5. spec-delta: the Spec Increment of a Change
+
+`spec-delta.md` is authored and approved alongside `design.md`, with three kinds of entries:
+
+- **ADDED**: a new section or bullet, naming the target file and the insertion anchor;
+- **MODIFIED**: which section changes, the verbatim old text (must match the target file character for character), and the new text;
+- **REMOVED**: which section goes away and the verbatim text being deleted.
+
+With no increment, write `No delta: <reason>` — never leave it blank and never delete the file. At archive time `dsh-trellis-sun-finish-work` merges each entry mechanically: **no incidental rewriting, no "improving" the wording**. If any entry does not line up (the target changed after approval, an anchor is missing or duplicated) it stops and asks, surfacing the conflict to the user instead of merging silently. The result is recorded in the delta's merge-record section and in the developer journal.
+
+Versus `update-spec`: a delta is an **ex ante** proposal that is merged mechanically at archive time (the spec increment of the change itself); `update-spec` captures **ex post** lessons learned during implementation.
+
+### 6. review and check: Verifiable Inspection
+
+**check** (`dsh-trellis-sun-check`) runs in four steps: (1) scope — the change set is computed deterministically with `git diff --name-only`, never listed from memory; (2) rules — paths are resolved through a path → rule lookup, and an unmatched path is labelled "no applicable spec" rather than inventing one; (3) coverage — every changed file gets a verdict line, and one missing file blocks sign-off; (4) fail-closed — tool failures (invalid output, non-zero exit, cancellation, truncation) are reported as errors, never as "clean".
+
+**review** (the feat review stage plus an independent subagent) is evidence-based: pinned Git snapshot, file:line + quoted source + actual output as the only acceptable evidence, weak evidence downgraded to "suspected", stable issue ids with per-round state, and escalation to a human after 3 non-converging rounds.
+
+**Two levels**: the per-task small review goes deep (it has the prd / design / spec-delta context); the version-freeze big review goes wide (cross-module consistency and accumulated residue, run end to end by an external OCR tool — the mechanics are copied into the skill text, the tool is not bundled).
+
+### 7. Graph Queries (External Dependency, Optional)
+
+The graph service itself (`codebase-memory-mcp`) is an **external dependency**: it is not bundled and not shipped with the package. The plugin only carries the behaviour layer — when to query, what to query, what to do when the query fails — in the shared `skills/_templates/graph-queries.md`, with each skill stating just its own stage's points:
+
+- **design**: query layering and blast radius before writing `design.md` / `spec-delta.md`, and put the affected modules into the design;
+- **before-dev**: query the modules involved before implementation and hand the file list and call edges to the implementer as context;
+- **check**: enumerate affected packages with the graph during cross-package consistency checks instead of guessing with grep.
+
+The only supported connection is DSH's built-in `@deepseek-ai/dsh-mcp-client` mounted natively (stdio pointing at the binary). Preconditions: `codebase-memory-mcp --version` must print a version; `cli list_projects` must start, `index_status --project` must show a recent `indexed_at`, and a re-index must move that timestamp forward. When the service is missing, has no index, or a query fails, the documented degradation path takes over (`grep` / `glob` / `read`) and the artifact must state "graph service not installed / unverified". Qt parsing precision has not been measured, so any Qt-level conclusion needs text or runtime evidence of its own.
+
+---
+
 ## Provided Tools
 
 The plugin registers the following specialized tools:
 
 - **`dsh_trellis_sun_task_create`**: Creates a new task with initial `task.json`, seeds templates, and binds to the current session.
 - **`dsh_trellis_sun_task_update`**: Advances task stages, updates step progress, records verification evidence, or modifies task metadata without changing the current session binding. An explicit `slug` selects only the update target; use the board's activate button to switch tasks.
-- **`dsh_trellis_sun_artifact_update`**: Safely updates task planning documents (such as `prd.md`, `design.md`, `review.md`), restricted by path and filename whitelists.
+- **`dsh_trellis_sun_artifact_update`**: Safely updates task deliverables. Current outputs are `prd.md` / `design.md` / `spec-delta.md` / `review.md` / `report.md` / `analysis.md` / `fix-note.md` / `scan.md` / `refactor-design.md` / `apply-notes.md`; `implement.md` / `checklist.yaml` / `check.md` / `design-review.md` are marked compatibility-only and exist for historical tasks. Paths are confined to the active task directory.
 - **`dsh_trellis_sun_task_archive`**: Archives a completed task to `.trellis/tasks/archive/YYYY-MM/` and unbinds the session.
 - **`dsh_trellis_sun_task_skip`**: Skips the Trellis workflow for the active session upon user approval, unlocking write tools.
 - **`dsh_trellis_sun_state`**: Inspects and reports Trellis runtime state and task information for the current workspace.
@@ -231,19 +299,27 @@ dsh-trellis-sun/
 ├── lib/
 │   ├── index.js            # Plugin entry: registers pre-step hooks, tool filtering, and API routes
 │   ├── task.js             # Task engine: step state machine, verification gates, and audits
-│   ├── skills.js           # Skills provider: provisions standard workflow skills into workspace
+│   ├── skills.js           # Skills provider: provisions workflow skills and artifact templates, prunes retired templates
 │   ├── breadcrumb.js       # Context builder: extracts focused steps and formats prompts
-│   ├── spec.js             # Spec index: reads the .trellis/doc.json files whitelist or falls back to .trellis/spec
 │   ├── readonly.js         # Authorization logic: undecided / planning / authorized states
-│   ├── state.js            # State resolution: stage inference, session pointers, slug checks
-│   ├── artifact.js         # Sandboxed writes: whitelisted artifact updates and security checks
+│   ├── spec.js             # Spec index: reads the .trellis/doc.json files whitelist and injects bodies within budget
+│   ├── state.js            # State resolution: stage inference, session pointers, slug charset checks
+│   ├── artifact.js         # Sandboxed writes: tiered whitelist (current outputs / retired names) and path safety
 │   ├── archive.js          # Archiving logic: completion validation, directory migration, Git checks
+│   ├── git.js              # Git checks: working-tree cleanliness and pinned snapshots (read-only, degrades safely)
 │   ├── board.js            # Kanban data: aggregates active tasks and archive buckets
 │   ├── client.js           # Web client: phase chip, dual-mode board (compact popover + full-screen board), and settings panel
+│   ├── meta.js             # Plugin identity, config schema, and default allowlist
+│   ├── resolve.js          # Project resolution: decides "trellis-active" from the session cwd (pure path handling)
+│   ├── settings.js         # Settings wiring: Loader-entry driven Config form read/write
+│   ├── trust.js            # Local browser-trust fence for the Web read-only API (not an auth layer)
 │   └── types/index.d.ts    # TypeScript type definitions
-├── skills/                 # Bundled workflow skills and markdown templates
+├── scripts/
+│   ├── install.mjs         # Install/wiring CLI: --reseed, --project, --fix-deps, --patch-harness
+│   └── extract-changelog.mjs  # Extracts one release's bilingual body from CHANGELOG
+├── skills/                 # 15 bundled workflow skills + _templates/ (stage templates, work-types and graph-queries protocols)
 ├── docs/images/            # Screenshots and architecture diagrams
-└── test/                   # Automated unit test suite
+└── test/                   # Automated unit test suite (node --test)
 ```
 
 ---

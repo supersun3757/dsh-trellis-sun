@@ -2,11 +2,13 @@
 
 <div align="center">
   <b style="font-size: 1.3em;">Trellis 工作流扩展 · DeepSeek Harness</b><br />
-  <sub>结构化阶段流转 · 步骤状态机 · 质量验收门禁 · 可选规划期只读保护</sub><br /><br />
+  <sub>结构化阶段流转 · 步骤状态机 · 质量验收门禁 · spec 增量合并 · 证据型 review · 可选规划期只读保护</sub><br /><br />
   <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
   <img alt="Node Version" src="https://img.shields.io/badge/Node.js-≥20-green.svg" />
   <img alt="Step State Machine" src="https://img.shields.io/badge/Steps-5--State%20Machine-blue.svg" />
   <img alt="Verification Gate" src="https://img.shields.io/badge/Gate-Verified%20Check-success.svg" />
+  <img alt="Spec Delta" src="https://img.shields.io/badge/Spec--Delta%20Merged-purple.svg" />
+  <img alt="Evidence Review" src="https://img.shields.io/badge/Review-Evidence--Based-orange.svg" />
 </div>
 
 <div align="center">
@@ -39,6 +41,10 @@
 - **会话级状态隔离**：各会话的任务绑定关系独立存储在 `.trellis/.runtime/sessions/` 中，多会话与并发子代理并行工作时互不串扰。
 - **双模态任务看板（视觉语言 v2）**：常态为极简紧凑弹窗（当前绑定任务置顶为焦点卡片，内置高亮步骤清单与折叠态；下方按状态分组列出任务流），可一键展开为全屏大看板（按「进行中 / 规划中 / 已完成」分组表格，支持 `⌘K` 实时搜索与工作流类型筛选）；右侧详情面板内置 **Step Tracker 步骤流水线**、阶段轨道节点与产物文件列表。看板遵循**单强调色设计**与**克制交互**——不直接改任务状态，仅提供「▶ 推进任务」将指令安全填入输入框交由 Agent 执行，产物点击生成 `@.trellis/tasks/...` 原生文件引用交给 DSH 原生查看。
 - **Git 干净度校验（支持局部校验）**：任务完成和归档时自动检查 Git 工作区状态，防止遗留未提交的脏代码。若工作区存在与任务无关的未提交改动，可在 `dsh_trellis_sun_task_update` / `dsh_trellis_sun_task_archive` 中通过 `modified_files` 声明任务实际改动文件，校验将限缩到清单内文件（须已提交），清单外未提交改动仅告警、不再阻塞；未传该参数时保持全局严格校验。
+- **spec 增量提案（spec-delta）**：feat 轨道的 `design` 阶段与 `design.md` 同时产出 `spec-delta.md`——按 ADDED / MODIFIED / REMOVED 写清「本次改动对常驻 spec 的增量」，**两者都批准后才进 impl**；归档时由 `dsh-trellis-sun-finish-work` 逐条机械合并进常驻 spec，旧文本必须与目标文件逐字一致、章节锚点必须存在且不重复，任何一条对不上就**停下询问**，禁止静默合并。它与「实施后复盘教训」（`update-spec`）是两件不同的事。
+- **可核对的 check 与证据型 review**：check 的改动集由 `git diff` 确定性算出（不许凭记忆）、按路径查表取规则、逐文件覆盖清单漏一个不收工、工具失败一律按错误上报；review 固定在 Git 快照上，要求 file:line + 原文引用 + 实际输出三件套，证据不足降级为「疑似」，多轮不收敛转人工。节奏分两级——随任务的小 review 管深，版本冻结时的打板大 review 管广（调用外部 OCR 工具，机制抄进技能而工具不进插件）。
+- **图查询作外部依赖**：可选接入 `codebase-memory-mcp`（用 DSH 内置 MCP 客户端原生挂载），design 查分层与波及面、impl 前查模块图、check 枚举受影响包；共享协议写在 `skills/_templates/graph-queries.md`（索引纪律、有界重试、stale-daemon 与 Windows DACL 陷阱、降级口径）。未安装、无索引或查询失败时按降级口径退回文本检索；Qt 工程的解析精度尚未实测，不做承诺。
+- **产物白名单分层**：交付文档写入通道只认当前流程产出的 10 个产物，另保留 4 个历史名（`implement.md` / `checklist.yaml` / `check.md` / `design-review.md`）供存量任务更新——工具描述把两者分开标注，新任务不会照着白名单写一个必然被播种剪除的文件。
 
 ---
 
@@ -65,6 +71,19 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 >
 > 装的若是本地开发目录，用 `link:<仓库绝对路径>`；装完成后**完整退出并重启桌面版**
 > （含托盘图标，确认任务管理器中不再有 `DeepSeek Harness.exe`）才会生效。
+
+> **升级或改动了技能之后：项目里的技能副本不会自动跟着变。** 播种按项目内的
+> `.agents/skills/.trellis-version` 标记判定——版本号没变就整体跳过（否则每次启动都会覆写一遍）。
+> 所以换了包、或改了 `skills/**`，请二选一：
+>
+> ```sh
+> # A) 对指定项目强制重播（覆写同名技能与模板，并清理废弃模板）
+> node scripts/install.mjs --reseed --project <项目根目录>
+> # 想先看会改什么：追加 --dry-run
+> ```
+>
+> B) 抬 `package.json` 的 version 后重启宿主——已播过的项目会进入覆写分支。
+> `--reseed` 不能与 `--uninstall` / `--fix-deps` / `--patch-harness` / `--auto` 同时使用。
 
 > **版本兼容性**：插件声明的 `@deepseek-ai/dsh-*` peer 范围必须覆盖当前 DSH 运行时版本。
 > DSH 会在安装前置检查（pnpm 运行之前）与 profile 启动时校验该范围，不匹配会直接
@@ -107,6 +126,8 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 | **缺陷修复 (`issue`)** | `issue-MM-DD-name` | `report` → `analyze` → `fix` → `fix-note` | 适合排查和定位 bug、回归问题及异常情况 |
 | **代码重构 (`refactor`)** | `refactor-MM-DD-name` | `scan` → `design` → `apply` → `done` | 保持对外行为不变的前提下进行架构或代码优化 |
 
+> **spec 增量**：feat 轨道的 `design` 阶段同时产出 `design.md` 与 `spec-delta.md`，两者均 `approved` 才允许进入 `impl`；归档时先由 `dsh-trellis-sun-finish-work` 把增量逐条合并进常驻 spec，再做提交与归档。不涉及常驻 spec 的 quick 改动，写「无增量：<原因>」即可。
+
 ---
 
 ## 核心机制详解
@@ -125,6 +146,7 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 - **自动化验证 (`verification: 'ai'`)**：模型编写代码后，必须先运行测试并调用 `dsh_trellis_sun_task_update` 填入 `verified: true` 与 `verificationNotes` 测试记录，随后才允许将状态更新为 `completed`，防止单次调用跳过测试。
 - **人工验收卡点 (`verification: 'human'`)**：用于涉及核心契约或高风险操作的步骤。只有在用户明确同意且记录 `verifiedBy: 'human'` 后，该步骤才被允许标记为 `completed`。
 - **任务完结审计**：当任务标记为完成或发起归档时，系统会校验所有步骤是否均已完成并通过验证，同时校验 Git 工作区是否干净。
+- **门禁只认已持久化的状态**：完结校验读的是**已写入磁盘**的 `verification` 与 `verified`——同一次调用里既降级 `verification` 又置 `completed`、或把 `verified` 在同一调用内写成 `true`，都会被拒绝（必须分两次调用）；`steps` 整体替换时按持久化列表校验，`{status: 'completed', steps: []}` 这类洗白不成立。
 
 ### 2. 双模态任务看板（紧凑浮层与全屏工作台）
 
@@ -164,13 +186,58 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 
 ---
 
+### 4. 交付文档与产物白名单
+
+任务目录下的交付文档只能经 `dsh_trellis_sun_artifact_update` 写入，且受两层约束：文件名必须在白名单内，路径必须是当前任务目录的直接子文件（slug 字符集全仓唯一定义，`.`、`..` 与含分隔符的 slug 一律拒绝）。
+
+白名单分两档：
+
+| 档位 | 内容 | 用途 |
+|---|---|---|
+| 当前流程产物（10 个） | `prd.md`、`design.md`、`spec-delta.md`、`review.md`、`report.md`、`analysis.md`、`fix-note.md`、`scan.md`、`refactor-design.md`、`apply-notes.md` | 每个都有随包模板与所属阶段，工具描述把它们列为主目标 |
+| 历史兼容名（4 个） | `implement.md`、`checklist.yaml`、`check.md`、`design-review.md` | 当前流程不再产出、模板也已剪除，但存量任务里确实存在，保留可写以免老任务变成只读 |
+
+契约测试双向钉住：当前档每个名字必须随包带模板，历史档每个名字必须没有模板且仍在放行清单里。
+
+### 5. spec-delta：改动的 spec 增量
+
+`spec-delta.md` 与 `design.md` 同批产出、同批批准，内容分三类：
+
+- **ADDED**：新增章节或条目，写清目标文件与插入锚点；
+- **MODIFIED**：改哪一段、旧文本原文（须与目标文件逐字一致）、新文本原文；
+- **REMOVED**：删哪一段、被删文本原文（同样须逐字一致）。
+
+无增量时写「无增量：<原因>」，不留空、不删除文件。归档时 `dsh-trellis-sun-finish-work` 逐条机械合并，**不顺手改写、不「优化」措辞**；任一条对不上（目标文件在批准后被改过、锚点不存在或重复）就停下询问，把冲突点摊给用户，绝不静默合并。合并结果记入 delta 末尾的「合并记录」，并在研发日志里留一笔。
+
+与 `update-spec` 的区别：delta 是**事前**提案 + 归档时机械合并（改动本身的 spec 增量）；`update-spec` 是**事后**复盘（实施中真正学到的教训）。
+
+### 6. review 与 check：可核对的验证
+
+**check**（`dsh-trellis-sun-check`）四步：① 定范围——改动集由 `git diff --name-only` 确定性算出，禁止凭记忆列举；② 取规则——路径 → 规则查表，查不到标「无适用规范」而不许现编；③ 覆盖清单——改动集里每个文件一行结论，漏一个不许收工；④ fail-closed——工具失败（无效输出、非零退出、取消、截断）一律按错误上报，绝不报「干净」。
+
+**review**（feat 的 review 阶段 + 独立子代理）是证据型工作流：固定在 Git 快照上、file:line + 引用原文 + 实际输出三件套、证据不足降级为「疑似」、问题用稳定编号并保留历轮状态、3 轮不收敛转人工。
+
+**两级节奏**：随任务的小 review 管深（有 prd / design / spec-delta 上下文）；版本冻结时的打板大 review 管广（跨模块一致性与残渣，调用外部 OCR 工具跑全量——机制抄进技能，工具不进插件）。
+
+### 7. 图查询（外部依赖，可选）
+
+图服务本体（`codebase-memory-mcp`）是**外部依赖**，不进插件、不随包分发；插件只带行为层——何时查、查什么、查不到怎么办，写在共享的 `skills/_templates/graph-queries.md` 里，design / before-dev / check 三个技能各自只写本阶段要点：
+
+- **design**：写 `design.md` 与 `spec-delta.md` 之前先查分层与波及面，把影响到的模块写进方案；
+- **before-dev**：impl 前对涉及模块查一次图，把相关文件与调用边作为上下文交给实现；
+- **check**：跨包一致性检查用图枚举受影响包，替代 grep 猜范围。
+
+连接方式只用 DSH 内置 `@deepseek-ai/dsh-mcp-client` 原生挂载（stdio 直接指向二进制）。前置检查：`codebase-memory-mcp --version` 打得出版本才算装了；`cli list_projects` 能起、`index_status --project` 的 `indexed_at` 是近期的、重建索引后时间戳前移。未安装、无索引、查询失败一律按文档里的降级口径退回 `grep` / `glob` / `read`，并在产物里写明「图服务未安装 / 未验证」。Qt 工程的解析精度还没有实测，Qt 层的关键结论必须另有文本或运行时证据支撑。
+
+---
+
 ## 扩展工具 (Tools) 说明
 
 插件向运行时注册了以下专用工具：
 
 - **`dsh_trellis_sun_task_create`**：创建新的工作流任务，生成初始 `task.json` 与阶段交付物模板，并自动绑定当前会话。
 - **`dsh_trellis_sun_task_update`**：推进任务阶段、更新步骤进度、记录验证证据或更新任务信息，不改变当前会话绑定。显式传入 `slug` 只选择更新目标；切换任务请使用看板的激活按钮。
-- **`dsh_trellis_sun_artifact_update`**：安全更新任务交付文档（如 `prd.md`, `design.md`, `review.md` 等），受白名单和路径校验约束。
+- **`dsh_trellis_sun_artifact_update`**：安全更新任务交付文档。当前流程产物为 `prd.md` / `design.md` / `spec-delta.md` / `review.md` / `report.md` / `analysis.md` / `fix-note.md` / `scan.md` / `refactor-design.md` / `apply-notes.md`；`implement.md` / `checklist.yaml` / `check.md` / `design-review.md` 标为历史兼容名，仅供存量任务更新。路径限定在当前任务目录内。
 - **`dsh_trellis_sun_task_archive`**：将已完成的任务归档至 `.trellis/tasks/archive/YYYY-MM/` 目录下，并解除当前会话绑定。
 - **`dsh_trellis_sun_task_skip`**：经用户同意后，在当前会话跳过 Trellis 工作流约束，直接放行全量工具权限。
 - **`dsh_trellis_sun_state`**：诊断并返回当前项目的 Trellis 运行时状态与任务信息。
@@ -228,19 +295,27 @@ dsh-trellis-sun/
 ├── lib/
 │   ├── index.js            # 插件入口：注册 pre-step 钩子、运行时工具过滤与 API 路由
 │   ├── task.js             # 任务执行逻辑：步骤流转、验证门禁检查与状态校验
-│   ├── skills.js           # 技能供给：向项目注入 standard 工作流技能与产物模板
+│   ├── skills.js           # 技能供给：向项目注入工作流技能与产物模板，含废弃模板自愈修剪
 │   ├── breadcrumb.js       # 上下文提示：提取焦点步骤与构建面包屑
 │   ├── readonly.js         # 只读策略：推导 undecided / planning / authorized 授权状态
-│   ├── spec.js             # 规范索引：读取 .trellis/doc.json files 白名单或兼容扫描 .trellis/spec
-│   ├── state.js            # 状态解析：阶段推断、会话指针与 slug 格式校验
-│   ├── artifact.js         # 产物写入：受控文档更新与路径安全限制
+│   ├── spec.js             # 规范索引：读取 .trellis/doc.json files 白名单并按预算注入正文
+│   ├── state.js            # 状态解析：阶段推断、会话指针与 slug 字符集校验
+│   ├── artifact.js         # 产物写入：白名单分层（当前产物 / 历史兼容名）与路径安全限制
 │   ├── archive.js          # 归档处理：任务完结检查、目录归档迁移与 Git 干净度校验
+│   ├── git.js              # Git 校验：工作区干净度与固定快照（只读，非仓库环境安全降级）
 │   ├── board.js            # 看板数据：任务记录（含 steps 聚合）、阶段轨道与归档列表
-│   ├── client.js           # 前端界面：Web 阶段徽章、双模态看板（紧凑浮层 + 全屏工作台）与设置项
+│   ├── client.js           # 前端界面：阶段徽章、双模态看板（紧凑浮层 + 全屏工作台）与设置项
+│   ├── meta.js             # 插件身份、配置 schema 与默认白名单
+│   ├── resolve.js          # 项目解析：由会话 cwd 判定 .trellis/ 项目（纯路径，不碰 IO）
+│   ├── settings.js         # 设置接线：Loader 条目驱动的 Config 表单读写
+│   ├── trust.js            # Web 只读 API 的本地浏览器信任围栏（非鉴权层）
 │   └── types/index.d.ts    # TypeScript 类型定义
-├── skills/                 # 内置的工作流技能与各阶段 Markdown 模板
+├── scripts/
+│   ├── install.mjs         # 安装/接线 CLI：--reseed 重播技能、--project 指定项目、--fix-deps、--patch-harness
+│   └── extract-changelog.mjs  # 从 CHANGELOG 抽取某版本的双语正文
+├── skills/                 # 15 个内置工作流技能 + _templates/（阶段模板、work-types 与 graph-queries 协议）
 ├── docs/images/            # 界面截图与架构图素材
-└── test/                   # 自动化单元测试套件
+└── test/                   # 自动化单元测试套件（node --test）
 ```
 
 ---
