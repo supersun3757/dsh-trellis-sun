@@ -12,6 +12,54 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 
 ---
 
+## v1.1.3 — 2026-11-27
+
+打板大 review 复核后修掉三条写入门禁漏洞，并解决一个更隐蔽的问题：产物白名单当着模型的面列出一批「写了也会被播种剪掉」的名字。本版不动 UI，只收紧写入路径、让工具描述说实话，并把两处失真的文档改对。
+
+## 修复
+
+- **slug 越界写（可越出任务根目录）**：`dsh_trellis_sun_task_update` 的更新路径此前只按文件名字符拼接，`..` 能穿出 `.trellis/tasks/` 写到项目里任何位置。现在 `SLUG_CHARSET` 在 `lib/state.js` 唯一定义（强制单个路径段、拒绝 `.` 与 `..`），`lib/archive.js` 改为再导出而非第二份拷贝，`lib/index.js` 去掉第三份内联正则；`validateSlug` 先判段安全再判命名规范，于是**创建路径**也一并堵上（`feat-01-01-../../evil` 过去能通过 `(.+)$` 的名字段）。
+- **完成卡点判的是旧值**：新增 `completionGate(current, next)`，读**已持久化**的 `verification`——同一次调用里先降级再加完成不再能给自己放行；`verified` 必须持久化前为真**且**本次更新后仍为真（同调用写入或清除都不算数）；`human` 档另需两侧 `verifiedBy: 'human'`。`verified: true` 的自证护栏同样改判持久化值。
+- **`steps` 整体替换绕过卡点**：`{status:'completed', steps: []}` 曾经一次调用就能洗白所有步骤。现在完成时若同时提交 `steps`，**持久化列表**也必须先过期门禁；单步推进不受影响，最后一步一次调用完结仍然合法。
+- **产物白名单不再列出注定失效的名字**：`implement.md` / `checklist.yaml` / `check.md` / `design-review.md` 被工具描述当作可写目标，但当前流程不产出它们、播种还会主动剪掉对应模板，写进去等于白写。白名单拆成 `CURRENT_ARTIFACTS`（10 个，每个都有随包模板）与 `LEGACY_ARTIFACTS`（4 个历史名，保留可写以免存量任务变只读），并集仍是沙箱放行集合；工具描述只把当前档列为目标，历史档标「仅用于更新老任务」。
+- **`design-review` 只是遗留阶段**：确认其历史身份（`lib/state.js` 已按 planning 兼容旧任务），`check` 阶段的产物本来就是 `review.md`；README 两处把它写成 `check.md` 的示例已改。
+
+## 文档
+
+- **`_templates/work-types.md` 编号修正**：「通用约定」13 条却编到 11 号、`5.` 与 `6.` 各出现两次，改为连续的 1..13；全仓核对过没有按编号交叉引用的位置。
+- **`_templates/graph-queries.md` 连接方式改对**：第三方薄桥 `princeofdream/dsh-codebase-memory-mcp` 在 0.2.x 上失配（按命名导出加载 vs 只给 `export default`），且 `failOnStartupError: true` 会让 spawn 失败抛进宿主启动路径、表现是白屏；改为只用内置 `@deepseek-ai/dsh-mcp-client` 原生挂载，并把这条死路写进文档。新增「服务装没装」第 0 步（`codebase-memory-mcp --version`），Qt 口径收敛为「只有本仓验证过，Qt 层未实测」。
+- **两份 README 同步补齐**：spec-delta 提案与归档合并、check 四步与证据型 review 的两级节奏、图查询作外部依赖、产物白名单分层，以及「升级或改动 `skills/**` 后项目副本不会自动更新」的 `--reseed` 说明；项目结构树补上此前漏掉的 `git.js` / `meta.js` / `resolve.js` / `settings.js` / `trust.js` 与 `scripts/`。
+
+## 测试
+
+- 新增 5 个用例（三条门禁回归 + 白名单分层契约 + 图查询断言），344 → **349** 全过。
+- 白名单契约双向钉住：当前档每个名字必须随包带模板，历史档每个名字必须无模板且仍在放行清单里——把 `check.md` 挪回当前档会让它立刻变红。
+
+---
+
+The board-level review's verification pass closed three write-path gate holes and one subtler problem: the artifact whitelist was advertising names that seeding deletes, so a model could follow the tool description and write a document that immediately vanished. No UI changes; this release tightens write paths, makes the tool description tell the truth, and fixes two documents that had drifted.
+
+## Fixed
+
+- **Slug traversal could escape the task root**: the update path of `dsh_trellis_sun_task_update` joined the slug straight into a path, so `..` could climb out of `.trellis/tasks/` and write anywhere in the project. `SLUG_CHARSET` is now defined once in `lib/state.js` (a single path segment; `.` and `..` rejected), `lib/archive.js` re-exports it instead of keeping a second copy, and `lib/index.js` drops its inline third copy. `validateSlug` checks the segment charset before the naming pattern, which closes the **create** path too (`feat-01-01-../../evil` used to slip past the `(.+)$` name segment).
+- **The completion gate read stale values**: the new `completionGate(current, next)` reads the **persisted** `verification`, so downgrading the gate and completing in one call no longer waives itself. `verified` must be true before the update **and** remain true after it (writing or clearing it in the same call does not count), and `human` mode needs `verifiedBy: 'human'` on both sides. The `verified: true` self-sign guard now keys off the persisted flag as well.
+- **Wholesale `steps` replacement bypassed the gate**: `{status:'completed', steps: []}` could whitewash every step in one call. When `completed` arrives together with `steps`, the **persisted** list must pass the gate first; single-step updates are untouched, so closing the last step in one call stays legal.
+- **The whitelist stopped advertising dead ends**: `implement.md` / `checklist.yaml` / `check.md` / `design-review.md` were presented as writable targets, yet no current workflow produces them and seeding prunes their templates, so writing them was pointless. The whitelist is split into `CURRENT_ARTIFACTS` (10 names, each with a shipped template) and `LEGACY_ARTIFACTS` (4 retired names kept writable so historical tasks stay updateable); the union is still the sandbox's accept set. The tool description only lists the current tier as targets and marks the rest compatibility-only.
+- **`design-review` is a legacy stage**: its historical status is now explicit (`lib/state.js` already treats it as planning for old tasks) and the `check` stage's artifact really is `review.md`; the two README spots that used `check.md` as an example were corrected.
+
+## Docs
+
+- **`_templates/work-types.md` numbering fixed**: the convention list had 13 entries numbered up to 11, with `5.` and `6.` each appearing twice; now a continuous 1..13, and nothing in the repo cites those numbers.
+- **`_templates/graph-queries.md` connection method corrected**: the third-party thin bridge `princeofdream/dsh-codebase-memory-mcp` does not load on 0.2.x (named exports vs its default-only export), and `failOnStartupError: true` turns a spawn failure into an exception on the host startup path — the symptom is a blank window. The document now prescribes DSH's built-in `@deepseek-ai/dsh-mcp-client` mounted natively and records that dead end. A step-0 "is the service even installed" check (`codebase-memory-mcp --version`) was added, and the Qt gate was narrowed to "verified in this repo only; Qt untested".
+- **Both READMEs caught up**: spec-delta proposals and the archive-time merge, check's four steps and the evidence-based review with its two-level cadence, graph queries as an external dependency, the tiered artifact whitelist, and the "project copies do not update themselves after `skills/**` changes" note with `--reseed`; the structure tree gained the five missing `lib/` modules (`git.js`, `meta.js`, `resolve.js`, `settings.js`, `trust.js`) and `scripts/`.
+
+## Tests
+
+- Five new cases (three gate regressions, the whitelist-tier contract, and the graph-query assertions): 344 → **349**, all passing.
+- The whitelist contract is pinned in both directions: every current name ships a template, every retired name ships none and stays accepted. Moving `check.md` back into the current tier turns it red immediately.
+
+---
+
 ## v1.1.2 — 2026-11-26
 
 图查询行为层第一次在真机上跑通 POC，随即暴露三处「写得很像真的、其实是编的」引用：一个不存在的工具名、一个不存在的探针二进制，以及缺少「服务根本起不来」这条最常见的前提。本版只修文本与自检口径，不动行为。
