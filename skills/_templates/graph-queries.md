@@ -8,7 +8,7 @@
 | 项 | 约定 |
 |---|---|
 | 服务本体 | `codebase-memory-mcp`，钉版本（调研基线 v0.12.1）；装在主力本，独立进程 + SQLite 图索引 |
-| 连接方式 | 薄 MCP 桥（`princeofdream/dsh-codebase-memory-mcp`，peer 全 `*`，纯转发）或 DSH 内置 MCP 客户端配置 |
+| 连接方式 | **只用 DSH 内置 `@deepseek-ai/dsh-mcp-client` 原生挂载**（stdio 直接指向二进制）。第三方薄桥 `princeofdream/dsh-codebase-memory-mcp` 已证否：DSH 0.2.x 按**命名导出**加载插件，它只给 `export default`，且默认 `failOnStartupError: true`——spawn 失败会把异常抛进宿主启动路径，**表现是白屏**。不要再挂第三方桥 |
 | 工具名 | 会话里呈现为 `mcp__<server>__<tool>`；下文用不带前缀的短名，实际调用前以当前工具列表为准 |
 | 数据边界 | 本地进程、本地索引；**禁止**把代码发往云端或 managed 端点 |
 
@@ -25,7 +25,11 @@
 
 ## 环境前置（跑不通就别开始查）
 
-图服务起不来有两种，症状完全不同，**都不等于「没索引」**：
+**第 0 步：服务装没装。** `codebase-memory-mcp --version` 能打印版本才算装了。装都没装时，
+下面两种症状一个都不会出现——表现是「命令不存在」，那是**缺依赖**，不是「没索引」；
+直接按下方「降级」处理，并在产物里写明「图服务未安装」，不要反复重试也不要去重建索引。
+
+装上了之后，起不来有两种，症状完全不同，**都不等于「没索引」**：
 
 1. **默认 profile 被拒绝**（Windows）：0.12.1 把 daemon 端点钉在 `%LOCALAPPDATA%\cbm-daemon-<hash>\`
    （`cbm-lifetime.lock` / `cbm-rendezvous.lock` / `cbm-version-cohort-*.lock`），并在创建前检查祖先目录的 DACL。
@@ -40,6 +44,7 @@
 
 | 检查 | 命令 | 通过的样子 |
 |---|---|---|
+| 装了没 | `codebase-memory-mcp --version` | 打印版本号；命令不存在即未安装 → 直接降级 |
 | 服务能起 | `codebase-memory-mcp cli list_projects` | `projects: N`，不出现 `DACL entry` |
 | 索引在 | `codebase-memory-mcp cli index_status --project <name>` | `status: ready` + 近期的 `indexed_at` |
 | 写入没锁死 | 重建一次索引，再看 `indexed_at` | 时间戳前移 |
@@ -72,6 +77,10 @@
 
 ## Qt 仓库门禁
 
-- Qt 信号槽 / moc / 模板的图解析精度**无公开证据**：POC（SunQtWorkbench，Serena 作对照组）未通过前，
-  Qt 层（信号槽连接、moc 生成代码、模板实例化）一律退回文本检索或 Serena，只在纯 C++ 业务层使用图查询。
-- POC 不通过时的回退口径：**只在非 Qt 仓库启用图查询**，Qt 仓库保持现状。
+- **验证范围只有本仓**：图服务是在 `dsh-trellis-sun` 自身上跑通的（3469 节点 / 6644 边，建索引 14 秒；
+  `trace_path` 对 `ensureProjectSkills` 返回 3 个调用者，与真实代码一致）。Qt 工程的解析精度——
+  信号槽、moc 生成代码、模板实例化——**没有验证过，也没有安排过对照实验**，任何「Qt 上查得准」的说法目前都不成立。
+- 未验证按未验证处理：Qt 层的关键结论必须另有文本或运行时证据支撑，不能只凭图；
+  图查不到时按上面的降级口径退回 `grep` / `glob` / `read`，并在产物里写明「Qt 层图结果未验证」。
+- 未验证 ≠ 不可用：纯 C++ 业务层照常使用图查询。若日后在 Qt 工程上实测出精度不足，
+  再收紧为「Qt 仓库停用图查询」——以实测数据为准，不预设立场。

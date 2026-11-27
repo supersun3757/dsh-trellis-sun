@@ -34,17 +34,17 @@ Trellis 核心三类工作流。
    指向该任务的会话指针（归档任务只读，不再可激活）。归档**只移动、不删除**记录。
    若工作区存在与本任务无关的未提交改动，可通过 `modified_files` 声明任务真实改动文件，
    局部 Git 校验（清单内文件须已提交；清单外改动放行并告警）。
-5. 细阶段用 `work.stage` + 产物文件恢复；**仓库产物优先于聊天历史**。
-6. 写代码前读项目配置的规范入口：有 `.trellis/doc.json` 时按 files 清单与导航阅读；无配置时按 root 默认目录读取对应规范与 `guides/`。
-7. 规划/需求澄清加载 `dsh-trellis-sun-brainstorm`；实现前 `dsh-trellis-sun-before-dev`；质量门 `dsh-trellis-sun-check`；
+7. 细阶段用 `work.stage` + 产物文件恢复；**仓库产物优先于聊天历史**。
+8. 写代码前读项目配置的规范入口：有 `.trellis/doc.json` 时按 files 清单与导航阅读；无配置时按 root 默认目录读取对应规范与 `guides/`。
+9. 规划/需求澄清加载 `dsh-trellis-sun-brainstorm`；实现前 `dsh-trellis-sun-before-dev`；质量门 `dsh-trellis-sun-check`；
    收工走原生 Trellis 生命周期（commit → `dsh-trellis-sun-finish-work` / `dsh_trellis_sun_task_archive`）；沉淀 `dsh-trellis-sun-update-spec`。
-8. 人卡点未通过时，禁止写 `status=in_progress`（或禁止进入写码阶段）。
-9. **slug 规范**：新任务目录名必须为 `<work-type>-<mm-dd>-<短名>`（如 `feat-01-15-billing-export`，
-   mm-dd 为创建日期）；插件每轮在 breadcrumb / `dsh_trellis_sun_state` 校验，不合规会提示。
-10. **spec-delta 是「改动本身的增量」**：feat 轨道在 design 阶段与 `design.md` 一起产出、一起批准，
+10. 人卡点未通过时，禁止写 `status=in_progress`（或禁止进入写码阶段）。
+11. **slug 规范**：新任务目录名必须为 `<work-type>-<mm-dd>-<短名>`（如 `feat-01-15-billing-export`，
+    mm-dd 为创建日期）；插件每轮在 breadcrumb / `dsh_trellis_sun_state` 校验，不合规会提示。
+12. **spec-delta 是「改动本身的增量」**：feat 轨道在 design 阶段与 `design.md` 一起产出、一起批准，
     归档时由 `dsh-trellis-sun-finish-work` 逐条机械合并进常驻 spec；它与 `dsh-trellis-sun-update-spec`
     沉淀的「实施教训」不是一回事，不要混用。
-11. **改动范围与检查结论都要有据**：`dsh-trellis-sun-check` 的改动集由 git 确定性算出，逐文件结论进覆盖清单；
+13. **改动范围与检查结论都要有据**：`dsh-trellis-sun-check` 的改动集由 git 确定性算出，逐文件结论进覆盖清单；
     工具失败按错误上报（fail-closed）。
 
 ## Review 节奏（两级）
