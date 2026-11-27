@@ -43,6 +43,7 @@
 - **Git 干净度校验（支持局部校验）**：任务完成和归档时自动检查 Git 工作区状态，防止遗留未提交的脏代码。若工作区存在与任务无关的未提交改动，可在 `dsh_trellis_sun_task_update` / `dsh_trellis_sun_task_archive` 中通过 `modified_files` 声明任务实际改动文件，校验将限缩到清单内文件（须已提交），清单外未提交改动仅告警、不再阻塞；未传该参数时保持全局严格校验。
 - **spec 增量提案（spec-delta）**：feat 轨道的 `design` 阶段与 `design.md` 同时产出 `spec-delta.md`——按 ADDED / MODIFIED / REMOVED 写清「本次改动对常驻 spec 的增量」，**两者都批准后才进 impl**；归档时由 `dsh-trellis-sun-finish-work` 逐条机械合并进常驻 spec，旧文本必须与目标文件逐字一致、章节锚点必须存在且不重复，任何一条对不上就**停下询问**，禁止静默合并。它与「实施后复盘教训」（`update-spec`）是两件不同的事。
 - **可核对的 check 与证据型 review**：check 的改动集由 `git diff` 确定性算出（不许凭记忆）、按路径查表取规则、逐文件覆盖清单漏一个不收工、工具失败一律按错误上报；review 固定在 Git 快照上，要求 file:line + 原文引用 + 实际输出三件套，证据不足降级为「疑似」，多轮不收敛转人工。节奏分两级——随任务的小 review 管深，版本冻结时的打板大 review 管广（调用外部 OCR 工具，机制抄进技能而工具不进插件）。
+- **文档审查也分两级**：小审 S1–S4（引用能落地 / 无占位与空洞 / 验收可测 / 文内自洽）随任务跑，结论写进 `review.md` 的「文档审查」节，不新建产物文件，S1–S3 命中未处理不得判 review passed；大审 D1–D7 在版本冻结时由 `dsh-trellis-sun-doc-review` 跑，出覆盖图 + 七维发现 + 需外部核对清单，报告落 `.trellis/reviews/`、以 `draft` 开工待人复核，不卡任何门禁。维度与证据规则只在 `skills/_templates/doc-review.md` 一处定义。
 - **图查询作外部依赖**：可选接入 `codebase-memory-mcp`（用 DSH 内置 MCP 客户端原生挂载），design 查分层与波及面、impl 前查模块图、check 枚举受影响包；共享协议写在 `skills/_templates/graph-queries.md`（索引纪律、有界重试、stale-daemon 与 Windows DACL 陷阱、降级口径）。未安装、无索引或查询失败时按降级口径退回文本检索；Qt 工程的解析精度尚未实测，不做承诺。
 - **产物白名单分层**：交付文档写入通道只认当前流程产出的 10 个产物，另保留 4 个历史名（`implement.md` / `checklist.yaml` / `check.md` / `design-review.md`）供存量任务更新——工具描述把两者分开标注，新任务不会照着白名单写一个必然被播种剪除的文件。
 
@@ -219,6 +220,13 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 
 **两级节奏**：随任务的小 review 管深（有 prd / design / spec-delta 上下文）；版本冻结时的打板大 review 管广（跨模块一致性与残渣，调用外部 OCR 工具跑全量——机制抄进技能，工具不进插件）。
 
+**文档审查同构，也是两级**（维度、证据规则与不采用项只在 `skills/_templates/doc-review.md` 一处）：
+
+- **小审 S1–S4**（随任务，feat review 阶段与 code review 同轮）：S1 引用能落地（路径 / 工具名 / 版本号逐个核对）、S2 没有占位与空洞、S3 验收可测、S4 文内自洽。结论写进 `review.md` 的「文档审查」节（issue → `fix-note.md`、refactor → `apply-notes.md`），**不新建产物文件**；S1 / S2 / S3 命中未处理，不得判 review passed。
+- **大审 D1–D7**（版本冻结）：由 `dsh-trellis-sun-doc-review` 执行，范围由 `.trellis/doc.json` 的 `files` 与文件树**算出**（不许凭印象列文件），产出覆盖图 + 七维发现 + 需外部核对清单，报告落 `.trellis/reviews/<yyyy-mm-dd>-doc-review.md`，以 `status: draft` 开工、经人或 `dsh-trellis-sun-check` 复核才转 `confirmed`，**不卡任何门禁**。
+- **与 check 的分工**：check 核「实现是否满足验收标准」，小审 S3 核「验收标准本身可不可测」，两者不互相替代。
+- **刻意不采用**：PDF / DOCX / OCR 管线（本插件没有文档读取工具）、多厂商评审团、批注 UI、机械一致性对账（doc-guard）与口径钉扎（canon-keeper）。
+
 ### 7. 图查询（外部依赖，可选）
 
 图服务本体（`codebase-memory-mcp`）是**外部依赖**，不进插件、不随包分发；插件只带行为层——何时查、查什么、查不到怎么办，写在共享的 `skills/_templates/graph-queries.md` 里，design / before-dev / check 三个技能各自只写本阶段要点：
@@ -313,7 +321,7 @@ dsh-trellis-sun/
 ├── scripts/
 │   ├── install.mjs         # 安装/接线 CLI：--reseed 重播技能、--project 指定项目、--fix-deps、--patch-harness
 │   └── extract-changelog.mjs  # 从 CHANGELOG 抽取某版本的双语正文
-├── skills/                 # 15 个内置工作流技能 + _templates/（阶段模板、work-types 与 graph-queries 协议）
+├── skills/                 # 16 个内置工作流技能 + _templates/（阶段模板、work-types、graph-queries 与 doc-review 协议）
 ├── docs/images/            # 界面截图与架构图素材
 └── test/                   # 自动化单元测试套件（node --test）
 ```

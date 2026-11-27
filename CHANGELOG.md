@@ -12,6 +12,60 @@ dsh-trellis-sun 各版本发布日志汇总（v0.5.1 及以前为上游 `@banana
 
 ---
 
+## v1.2.0 — 2026-11-27
+
+补上文档审查这条一直空着的通道，并按仓库已有的 code review 节奏把它拆成两级：**小审随任务、大审随版本冻结**。本版不新增任务产物名、不动产物白名单、不改任何既有门禁的语义——小审的结论落进现有阶段产物的一节，大审的结论不卡任何东西。
+
+## 功能
+
+- **小审 S1–S4（随任务）**：新增 `skills/_templates/doc-review.md`，作为「两把尺子」的唯一定义处（小审 S1–S4 / 大审 D1–D7 / 证据三要素 / 不采用项 / 取材出处），其他技能只交叉引用。feat 的 review 阶段与 code review 同轮跑：S1 引用能落地（路径、工具名、命令、版本号逐个核对）、S2 无占位与空洞、S3 验收可测、S4 文内自洽；结论写进 `_templates/feat/review.md` 新增的「文档审查（小审 S1–S4）」节，**不新建产物文件**。
+- **大审 D1–D7（版本冻结）**：新增第 16 个技能 `dsh-trellis-sun-doc-review`。范围由 `.trellis/doc.json` 的 `files` 加文件树**算出**（不许凭印象列文件），六步执行（定范围 → 清点与 Diátaxis 定位 → 七维审查 → 自证伪 → 出报告 → journal 收尾），产出覆盖图 + 七维发现（每维带**默认级别**，起点非结论，判 P1 必须过自证伪）+ 需外部核对清单；报告落 `.trellis/reviews/<yyyy-mm-dd>-doc-review.md`，以 `status: draft` 开工，经人或 `dsh-trellis-sun-check` 复核才转 `confirmed`，**不卡任何门禁、不改被审文档正文**。
+- **check 落定与边界**：`dsh-trellis-sun-check` 检查矩阵新增第 7 行「文档审查落定」（核对 S1/S2/S3 命中项是否已处理），并写明与第 5 行「PRD 验收标准逐条核对」的分工——5 核「实现是否**满足**标准」，S3 核「标准**本身**可不可测」。两者都跑才是重复劳动，所以边界写进文本。
+- **issue / refactor 按需**：两个技能各加一条落法说明，小审结论追加进 `fix-note.md` / `apply-notes.md` 的同名节，同样不新建文件。
+- **明确不采用**：PDF / DOCX / OCR 管线（本插件没有文档读取工具）、多厂商评审团、批注 UI、机械一致性对账（doc-guard 方向）与口径钉扎（canon-keeper 方向），逐条写进协议文件，避免下一轮又有人往这些方向重做。
+
+## 文档
+
+- `skills/_templates/work-types.md`：新增「文档审查节奏（两级）」一节（含两级表与四条纪律），通用约定补第 14 条，路由表补大审入口（否则按路由表找不到第 16 个技能），Feature 阶段表 review 行与子代理表各补一行。
+- `skills/dsh-trellis-sun-feat/SKILL.md`：review 阶段行、新增「文档 review（两级，与代码审查同构）」小节、人卡点第 3 条、子代理调度表、两条反模式。
+- 两份 README 同步：核心特性各加一条、§6「review 与 check」补文档审查两级与不采用项、结构树技能数 15 → 16。
+- `lib/skills.js` 与 `lib/index.js` 的技能计数注释同步为 16，`SKILL_DIRS` 登记新技能。
+
+## 测试
+
+- 新增 7 个用例（5 条契约 + 2 条播种 seam），349 → **356** 全过。
+- seam 2 **双向**钉住 `SKILL_DIRS` 与磁盘技能目录：新增了目录却忘了登记（永远不会播种），或登记了目录却已不存在（播种到空气），两种都会红。
+- 契约测试额外钉住「小审不新增产物」：`CURRENT_ARTIFACTS` 仍为 10、`doc-review.md` 不在放行集合里——将来想改成独立产物，必须先改测试而不是偷偷加一个白名单条目。
+- 契约测试还把 11 个维度编号（S1–S4、D1–D7）、证据三要素、`draft`/`confirmed`、`.trellis/reviews/`、不采用项与两个取材 URL 逐个钉死，防止技能文本被改写时悄悄丢维度。
+
+---
+
+The documentation-review channel has been missing all along. This release adds it and splits it the same way the repository already splits code review: **a small review per task, a big review at version freeze**. No new artifact names, no change to the artifact whitelist, no change to the semantics of any existing gate — the small tier lands in a section of the existing stage artifacts, and the big tier gates nothing.
+
+## Features
+
+- **Small review S1–S4 (per task)**: `skills/_templates/doc-review.md` is now the single definition of both rulers (S1–S4 / D1–D7 / the evidence triple / the deliberately rejected approaches / the sources), and other skills only cross-reference it. The feat review stage runs it in the same round as the code review: S1 references resolve (paths, tool names, commands and version numbers checked one by one), S2 no placeholders or hollow sections, S3 acceptance criteria are testable, S4 the reviewed set is internally consistent. Conclusions go into the new "documentation review (small review S1–S4)" section of `_templates/feat/review.md` — **no new artifact file**.
+- **Big review D1–D7 (version freeze)**: a new 16th skill, `dsh-trellis-sun-doc-review`. Its scope is **computed** from the `.trellis/doc.json` `files` list plus the file tree (never listed from memory), it runs six steps (scope → inventory and Diátaxis classification → seven dimensions → self-refutation → report → journal note), and it produces a coverage map, seven-dimension findings (each dimension carries a **default severity** — a starting point, not a verdict, and anything graded P1 must survive self-refutation) and a needs-external-verification list. The report lands in `.trellis/reviews/<yyyy-mm-dd>-doc-review.md`, opens as `status: draft`, becomes `confirmed` only after a human or `dsh-trellis-sun-check` reviews it, and **gates nothing and never edits the reviewed documents**.
+- **Check settles it, with an explicit boundary**: the `dsh-trellis-sun-check` matrix gains a seventh row, "documentation review settlement" (are the S1/S2/S3 hits resolved?), and states the split against its own fifth row ("PRD acceptance criteria, item by item") — row 5 asks whether the implementation **meets** the criteria, S3 asks whether the criteria **themselves** are testable. Running both blindly is duplicated work, so the boundary lives in the text.
+- **Issue / refactor on demand**: both skills gain a line describing where the conclusions go (`fix-note.md` / `apply-notes.md`, same section name), again with no new file.
+- **Deliberately rejected**: the PDF / DOCX / OCR pipeline (this plugin has no document-reading tools), multi-vendor review panels, annotation UI, mechanical cross-document reconciliation (the doc-guard direction) and canon-keeper pinning — each written down in the protocol file so nobody rebuilds them next round.
+
+## Docs
+
+- `skills/_templates/work-types.md`: a new "documentation review cadence (two tiers)" section (tier table plus four disciplines), a 14th general convention, and one row each in the feature stage table and the subagent table.
+- `skills/dsh-trellis-sun-feat/SKILL.md`: the review stage row, a new "documentation review (two tiers, same shape as code review)" section, the third hard human gate, the dispatch table, and two anti-patterns.
+- Both READMEs: one new core-feature bullet each, the §6 "review and check" section extended with both tiers and the rejected approaches, and the structure tree's skill count moved from 15 to 16.
+- The skill-count comments in `lib/skills.js` and `lib/index.js` now say 16, and `SKILL_DIRS` registers the new skill.
+
+## Tests
+
+- 7 new cases (5 contract, 2 provisioning seams), 349 → **356**, all green.
+- Seam 2 pins `SKILL_DIRS` against the on-disk skill directories **in both directions**: a directory added without an entry never reaches a project, and an entry whose directory is gone provisions nothing. Both fail the test.
+- A contract test pins "the small review adds no artifact": `CURRENT_ARTIFACTS` stays at 10 and `doc-review.md` is not in the allowed set — turning it into a standalone artifact requires changing the test first instead of quietly adding a whitelist entry.
+- Another contract test pins the 11 dimension ids (S1–S4, D1–D7), the evidence triple, `draft`/`confirmed`, `.trellis/reviews/`, the rejected approaches and both source URLs, so a rewrite of the skill text cannot silently drop a dimension.
+
+---
+
 ## v1.1.3 — 2026-11-27
 
 打板大 review 复核后修掉三条写入门禁漏洞，并解决一个更隐蔽的问题：产物白名单当着模型的面列出一批「写了也会被播种剪掉」的名字。本版不动 UI，只收紧写入路径、让工具描述说实话，并把两处失真的文档改对。

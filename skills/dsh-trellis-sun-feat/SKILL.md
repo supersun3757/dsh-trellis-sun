@@ -70,7 +70,7 @@ epic/多交付物 → parent + child tasks（父任务管集成验收）。
 | 有 prd；standard 且无 design 或 design.status≠approved | design | 写/改 `design.md`（聚焦需求拆解与实现方案，按 YAGNI/KISS 保持精简）**与 `spec-delta.md`**（本次改动对常驻 spec 的增量），**等人同时确认两者** |
 | design 与 spec-delta 均 approved；planning 产物齐 + 人卡通过 | 规划期用 `dsh_trellis_sun_task_update` 录入 `steps`（含验收与 `verification`）；写 `task.json.status=in_progress` | 进入 impl |
 | in_progress；代码未完成 | impl | `dsh-trellis-sun-before-dev` → 按 `task.json.steps` 逐步实现（可派实现子代理） |
-| 实现完成；review 非 passed | review | **派独立子代理**按「证据型 code review」写 `review.md`；机械自修可另用 `dsh-trellis-sun-check` |
+| 实现完成；review 非 passed | review | **派独立子代理**按「证据型 code review」写 `review.md`；**同一轮跑文档小审（S1–S4）并写进 `review.md` 的「文档审查」节**；机械自修可另用 `dsh-trellis-sun-check` |
 | review 过；check 未通过 | check | 派 `dsh-trellis-sun-check`，按项目配置的规范文件与质量门验证；将结果写入 `review.md` |
 | check 通过 | finish | `dsh-trellis-sun-update-spec`（教训）→ 应用 `spec-delta`（归档时机械合并，见 finish-work）→ commit → `dsh-trellis-sun-finish-work` / archive |
 
@@ -111,13 +111,27 @@ review 阶段由**独立子代理**执行，按下面的证据型流程写 `revi
 
 两级节奏：**开发中走小 review**（本阶段，管深，有 prd/design/spec-delta 上下文）；**版本冻结打板时另跑一次 OCR 大 review**（管广，跨模块一致性、规则型问题与残渣）——见 `_templates/work-types.md` 的「Review 节奏」。
 
+## 文档 review（两级，与代码审查同构）
+
+维度、证据规则与不采用项只在 `_templates/doc-review.md` 里定义（两把尺子），本节只讲怎么在 feat 轨道上跑。
+
+- **小审 S1–S4（本阶段必跑）**：S1 引用能落地、S2 无占位与空洞、S3 验收可测、S4 文内自洽。对象是本任务的
+  `prd.md` / `design.md` / `spec-delta.md`；主会话 inline 跑，被审文档 ≥ 3 份或合计 ≥ 800 行时派独立子代理。
+  每条命中给「位置 + 逐字引用 + 依据」，写进 `review.md` 的「文档审查（小审 S1–S4）」节，**不新建产物文件**。
+- **大审 D1–D7（不在本阶段）**：版本冻结时用 `dsh-trellis-sun-doc-review` 出独立报告，落
+  `.trellis/reviews/`，不卡门禁。小审不攒问题等大审，大审也不重扫小审已过完的条目。
+
+分工与 `dsh-trellis-sun-check`：check 核「实现是否满足验收标准」，小审 S3 核「验收标准本身可不可测」。
+
 ## 人卡点（硬）
 
 1. **design 与 spec-delta 未 approved**（standard）→ 禁止写 `status=in_progress`、禁止改业务代码。
 2. **code review = blocking**（`review.md`）→ 禁止 archive；应回到 impl 修复后重审。
-3. **`dsh-trellis-sun-check` 或任务要求的验证未通过** → 禁止宣称完成 / archive。
-4. **spec-delta 未 approved 或核对失败** → 禁止合并进常驻 spec（见 `dsh-trellis-sun-finish-work`）。
-5. 用户对 design 的确认必须是**本回合之后**的明确回复；创建 task ≠ 批准实现。
+3. **文档小审的 S1 / S2 / S3 命中未处理** → 禁止勾选 `review.md` 的「通过」、禁止宣称 review passed
+   （大审结论不卡门禁，不在此列）。
+4. **`dsh-trellis-sun-check` 或任务要求的验证未通过** → 禁止宣称完成 / archive。
+5. **spec-delta 未 approved 或核对失败** → 禁止合并进常驻 spec（见 `dsh-trellis-sun-finish-work`）。
+6. 用户对 design 的确认必须是**本回合之后**的明确回复；创建 task ≠ 批准实现。
 
 ## 产物
 
@@ -139,6 +153,7 @@ review.md
 |------|--------|------|------|
 | impl | 实现子代理（可选） | 业务代码 | 按 prd/design 实现 |
 | review | 独立子代理 | `review.md` | 独立代码审查（证据型，见上节） |
+| review | 主会话 inline（≥ 3 份文档时派子代理） | `review.md` 的「文档审查」节 | 文档小审 S1–S4，见 `_templates/doc-review.md` |
 | 自修/验证 | `dsh-trellis-sun-check` | 可改代码 | 对照 spec 自修 + 项目验证门；与独立审查互补，不互相替代 |
 
 调度要求：
@@ -165,6 +180,8 @@ review.md
 - 未批准 design 就写 `status=in_progress`
 - 未批准 `spec-delta` 就合并进常驻 spec，或核对失败时「差不多」匹配
 - 把猜测写成 review 发现，或拿工作区漂移状态当评审基线
+- 把文档小审当校对（只挑措辞），漏掉 S1 的死引用与 S3 的不可测验收标准
+- 文档问题「攒到大审再改」——小审不攒问题，也不等大审
 - 为了“预留未来需求”引入不必要的抽象与接口（违背 YAGNI）
 - Quick 名义下改跨模块契约
 - 用实现细节充当验收标准，跳过 prd 验收

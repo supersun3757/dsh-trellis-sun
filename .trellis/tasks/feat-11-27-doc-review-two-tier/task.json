@@ -1,0 +1,110 @@
+{
+  "title": "文档审查两级化（issue #4）：小审 S1–S4 随任务、大审 D1–D7 随版本冻结",
+  "status": "in_progress",
+  "work": {
+    "type": "feat",
+    "mode": "standard",
+    "stage": "check",
+    "execution_lane": "standard"
+  },
+  "description": "issue #4 要求补文档审查。owner 2026-11-27 定形：拆成两級，轻的做小 review（随任务，落进现有阶段产物的一节，不新建产物），重的做大 review（版本冻结，第 16 个技能，独立报告，不卡门禁），与仓库既有 code review 的两级节奏同构。维度、证据三要素、不采用项与取材出处集中在 skills/_templates/doc-review.md 一处。",
+  "steps": [
+    {
+      "id": "s1",
+      "title": "协议文件：两把尺子（S1–S4 / D1–D7）+ 报告骨架",
+      "status": "completed",
+      "spec": "新增 skills/_templates/doc-review.md：小审 4 维与大审 7 维各写明「查什么 / 怎么查 / 默认级别」，共用证据三要素（位置 + 逐字引用 + 依据），小审落法与大审 8 节报告骨架，与 check 的分工，明确不采用项与两个取材 URL。",
+      "acceptance": [
+        "S1–S4 与 D1–D7 共 11 个编号齐全，每维带级别列",
+        "证据规则写明「没有引用的意见直接删掉」",
+        "不采用项逐条列出（PDF/OCR、评审团、批注 UI、机械一致性、canon-keeper）",
+        "写清大审 draft→confirmed、不卡门禁、不改被审文档"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "test/skill-contract.test.js 的 three 个用例逐个断言：11 个编号、两张表都带「级别」列（第一轮 R1 缺的就是这一列，已补并加断言）、证据三要素、draft/confirmed、.trellis/reviews/、不采用项与两个 URL。"
+    },
+    {
+      "id": "s2",
+      "title": "小审接线：feat review 节 / check 落定行 / issue 与 refactor 按需",
+      "status": "completed",
+      "spec": "skills/_templates/feat/review.md 增「文档审查（小审 S1–S4）」节（逐文件四行表 + DR 编号发现表）；feat 技能 review 阶段行、文档 review 小节、人卡点第 3 条、子代理表、反模式各补内容；check 矩阵加第 7 行「文档审查落定」并划清与第 5 行的边界；issue/refactor 各加一条落法。",
+      "acceptance": [
+        "小审结论落在现有产物的一节，不新建产物文件",
+        "CURRENT_ARTIFACTS 仍为 10，doc-review.md 不在放行集合里",
+        "check 写明「一个管实现满没满足、一个管标准本身可不可测」"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "契约测试钉住 CURRENT_ARTIFACTS.size === 10 且 ALLOWED_ARTIFACTS 不含 doc-review.md；feat/review.md、feat/check/issue/refactor 四个技能的引用逐一断言；custom 无 lib/artifact.js 改动（git status 未列该文件）。"
+    },
+    {
+      "id": "s3",
+      "title": "大审技能（第 16 个）+ 播种登记",
+      "status": "completed",
+      "spec": "新增 skills/dsh-trellis-sun-doc-review/SKILL.md：定范围（doc.json files / legacy $root 扫描 / README+CHANGELOG / 本版本任务产物）、清点与 Diátaxis、七维、自证伪、出报告、journal 收尾，六条硬卡点；lib/skills.js 的 SKILL_DIRS 加该目录并把两处计数注释改成 16。",
+      "acceptance": [
+        "技能能被 ensureProjectSkills 播种到 .agents/skills/",
+        "SKILL_DIRS 与磁盘技能目录双向一致（多一个少一个都红）",
+        "技能文本写明报告落点、draft→confirmed、不改被审文档、不卡门禁"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "seam 1 断言 skill 与 _templates/doc-review.md 都落地；seam 2 改为直接比 SKILL_DIRS 与磁盘清单（第一轮 R2 指出原写法对「登记了但目录已删」永远绿），并做变异验证：移走 skills/dsh-trellis-sun-meta → not ok 2，还原后 SKILL.md 哈希一致（621EAFDD…）。"
+    },
+    {
+      "id": "s4",
+      "title": "契约测试 + 播种 seam（并证明不是假绿灯）",
+      "status": "completed",
+      "spec": "skill-contract 追加 5 条契约，新增 doc-review-seam 2 条 seam；全量 node --test 不得低于基线 349。",
+      "acceptance": [
+        "11 个编号、证据三要素、draft/confirmed、落点、不采用项、两个 URL 均有断言",
+        "每个新断言都能被打红（变异验证）",
+        "全量 node --test 全绿且 ≥ 355"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "node --test：349 → 356 全绿。独立 reviewer 做了 M1–M6 六个变异（改协议原文 / 删「不卡任何门禁」/ 改 check 第 7 行 / 改「自证伪」/ 加未登记目录 / 移走协议文件），逐个打红；我在修 R2 后补了第七个变异（移走 meta 目录）验证新方向也红。"
+    },
+    {
+      "id": "s5",
+      "title": "文档与发版：README ×2 / CHANGELOG / 1.2.0",
+      "status": "completed",
+      "spec": "两份 README 的核心特性、§6 review 与 check、结构树技能数 15→16；CHANGELOG 新增 v1.2.0 双语条目；package.json 1.1.3 → 1.2.0。",
+      "acceptance": [
+        "四处技能计数一致为 16",
+        "CHANGELOG 能被 scripts/extract-changelog.mjs v1.2.0 抽出双语正文",
+        "版本号 1.2.0"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "四处计数核对一致（SKILL_DIRS 16 = 磁盘 16 = README 16 = README_EN 16 + 两处 lib 注释）；extract-changelog v1.2.0 输出 51 行 / 6155 字符双语正文；package.json version=1.2.0。"
+    },
+    {
+      "id": "s6",
+      "title": "dogfood 小审 + 独立 review 与修复",
+      "status": "completed",
+      "spec": "用本任务的 prd/design 跑一遍小审 S1–S4 并把结论写进 review.md；code review 由独立子代理执行（不得自审）；blocking 修完后做增量复查。",
+      "acceptance": [
+        "review.md 含「文档审查（小审 S1–S4）」节且四维都有结论与依据",
+        "blocking 发现全部修复或给出不改的论证",
+        "增量复查后 status 由 blocking 变为 passed"
+      ],
+      "verification": "ai",
+      "verify": true,
+      "verified": true,
+      "verifiedBy": "ai",
+      "verificationNotes": "第一轮（独立子代理）blocking 3 条 + P3 2 条 + DR1/DR2 全部处置；第二轮增量复查（另一个独立子代理）逐条判 fixed、status 改为 passed，并做两次反向验证（删 D 表级别列 → 红；移走 skills/dsh-trellis-sun-meta → 红，还原后哈希逐位一致），全量 356/356。第二轮另报 P3 残留 N1（级别断言只查表头），已改为逐行断言并变异验证（清空 D3 级别单元格 → not ok 13；还原哈希一致）。随后按大审技能做了一次部分覆盖的冒烟运行（.trellis/reviews/2026-11-27-doc-review-protocol.md），又抓到 dR1（技能引用了不存在的 scanSpecTree，真实为 listProjectSpecs，已修并加契约断言）与 dR2（第 16 个技能未进路由表，已补行），两条修完后全量仍 356/356。"
+    }
+  ]
+}

@@ -88,6 +88,10 @@ Bug 修复流程，载体为 Trellis task。
 - `analysis.md`：根因剖析、调用栈追踪、失效机制说明。
 - `fix-note.md`：修改文件清单、验证结果、残留债务。
 
+> **文档小审（按需）**：`report.md` / `analysis.md` 写完准备对外用时，按 `_templates/doc-review.md` 的
+> S1–S4 过一遍，结论以「文档审查（小审）」节追加进 `fix-note.md`（不新建产物文件）；S1 / S2 / S3 命中
+> 未处理不得宣称完成。整套文档的深度审查走 `dsh-trellis-sun-doc-review`（大审，不卡门禁）。
+
 ## 反模式（严厉禁止）
 
 - ❌ 无复现步骤与证据就凭盲猜改代码；

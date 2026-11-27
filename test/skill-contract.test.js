@@ -207,3 +207,123 @@ test('the artifact whitelist separates current outputs from retired compatibilit
     'the sandbox must accept exactly the current outputs plus the retired names',
   )
 })
+
+test('the doc review protocol defines both tiers and the shared evidence rule', () => {
+  const doc = read('skills/_templates/doc-review.md')
+
+  // Stable ids: the exit checklist is reconciled id by id, so a renumbering or
+  // a dropped dimension must turn this test red rather than silently shrinking
+  // the checklist.
+  for (const id of ['S1', 'S2', 'S3', 'S4']) {
+    assert.match(doc, new RegExp(`\\b${id}\\b`), `the light tier must define ${id}`)
+  }
+  for (const id of ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7']) {
+    assert.match(doc, new RegExp(`\\b${id}\\b`), `the heavy tier must define ${id}`)
+  }
+
+  // Both tiers must state a severity per dimension: a checklist item without a
+  // default level cannot be reconciled as pass/fail at exit time. The heavy
+  // table was missing the column once (R1) while this test stayed green, so the
+  // column is asserted here rather than left to the reviewer's eye.
+  const dimensionHeader = doc.split('\n').find((line) => line.includes('维度') && line.includes('怎么查'))
+  assert.ok(dimensionHeader, 'the heavy tier must carry a dimension table')
+  assert.match(dimensionHeader, /级别/, 'the dimension table must carry a severity column')
+  const lightHeader = doc.split('\n').find((line) => line.includes('查什么') && line.includes('怎么查') && !line.includes('维度'))
+  assert.ok(lightHeader, 'the light tier must carry a dimension table')
+  assert.match(lightHeader, /级别/, 'the light dimension table must carry a severity column')
+
+  // Checking the header alone still lets a row ship with an empty level cell
+  // (N1), which is the same "assertion narrower than the criterion" defect as
+  // R1 one level down. Read the rows: each one's last cell must open with P1..P3.
+  for (const [prefix, expected] of [['D', 7], ['S', 4]]) {
+    const rows = doc.split('\n').filter((line) => new RegExp(`^\\| \\*\\*${prefix}\\d\\*\\*`).test(line))
+    assert.equal(rows.length, expected, `the ${prefix} tier must define exactly ${prefix}1–${prefix}${expected} rows`)
+    for (const row of rows) {
+      const cells = row.split('|').map((cell) => cell.trim()).filter(Boolean)
+      const level = cells[cells.length - 1]
+      assert.match(level, /^P[123]/, `every ${prefix} row must state its level (P1/P2/P3): ${row.slice(0, 40)}`)
+    }
+  }
+
+  // The evidence triple is what separates a finding from an opinion.
+  assert.match(doc, /位置/, 'a finding must carry a location')
+  assert.match(doc, /逐字/, 'a finding must quote the source verbatim')
+  assert.match(doc, /依据/, 'a finding must carry checkable evidence')
+  assert.match(doc, /没有引用的意见直接删掉/, 'an uncited opinion is not a finding')
+
+  // Tiers must stay distinguishable, and the light one must name its carrier.
+  assert.match(doc, /小审/, 'the light tier must be named')
+  assert.match(doc, /大审/, 'the heavy tier must be named')
+  assert.match(doc, /\.trellis\/reviews\//, 'the heavy tier must name its report location')
+  assert.match(doc, /draft/, 'the heavy report must be a draft until confirmed')
+  assert.match(doc, /confirmed/, 'the draft must have a settling state')
+})
+
+test('the light doc review lands in existing artifacts instead of a new one', () => {
+  // A new artifact would drag in the whitelist, seeding, both contract tiers and
+  // the task-engine spec. The light tier is a section, and this pins that.
+  assert.equal(CURRENT_ARTIFACTS.size, 10, 'the light tier must not add an artifact name')
+  assert.equal(ALLOWED_ARTIFACTS.has('doc-review.md'), false, 'doc-review.md must not become a task artifact')
+
+  const review = read('skills/_templates/feat/review.md')
+  assert.match(review, /文档审查/, 'the feat review artifact must carry the doc-review section')
+  for (const id of ['S1', 'S2', 'S3', 'S4']) {
+    assert.match(review, new RegExp(`\\b${id}\\b`), `the review artifact must expose ${id}`)
+  }
+
+  const feat = read('skills/dsh-trellis-sun-feat/SKILL.md')
+  assert.match(feat, /文档审查/, 'the feat skill must point at the doc-review section')
+  assert.match(feat, /小审/, 'the feat skill must run the light tier')
+  assert.match(feat, /_templates\/doc-review\.md/, 'the feat skill must cite the shared protocol')
+
+  // The check matrix owns the light tier's settling gate and must state the
+  // boundary against its own PRD-acceptance row, or both rows get run twice.
+  const check = read('skills/dsh-trellis-sun-check/SKILL.md')
+  assert.match(check, /文档审查落定/, 'check must settle the doc review')
+  assert.match(check, /可测/, 'check must state the S3 boundary')
+  assert.match(check, /_templates\/doc-review\.md/, 'check must cite the shared protocol')
+
+  for (const rel of ['skills/dsh-trellis-sun-issue/SKILL.md', 'skills/dsh-trellis-sun-refactor/SKILL.md']) {
+    assert.match(read(rel), /_templates\/doc-review\.md/, `${rel} must cite the shared protocol`)
+  }
+})
+
+test('the heavy doc review is a standalone skill that touches neither the docs nor a gate', () => {
+  const skill = read('skills/dsh-trellis-sun-doc-review/SKILL.md')
+
+  assert.match(skill, /\.trellis\/reviews\//, 'the report location must be explicit')
+  assert.match(skill, /status: draft/, 'the report must open as a draft')
+  assert.match(skill, /confirmed/, 'a human or check must be able to settle it')
+  assert.match(skill, /不修改被审文档正文/, 'the reviewer must never edit the reviewed docs')
+  assert.match(skill, /不卡任何门禁/, 'the heavy tier must not gate anything')
+  assert.match(skill, /覆盖图/, 'a coverage map must exist or the review is incomplete')
+  assert.match(skill, /自证伪/, 'P1 findings must survive an attempt to refute them')
+  assert.match(skill, /不许.*编造|禁止编造|编造/, 'invention must be forbidden')
+  assert.match(skill, /doc-review\.md/, 'the skill must defer its dimensions to the shared protocol')
+  // The big review's first real run found this one the hard way: the skill cited
+  // a scanner (`scanSpecTree`) that does not exist. Pin the real symbol.
+  assert.match(skill, /listProjectSpecs/, 'the legacy scope fallback must name the real scanner')
+  assert.doesNotMatch(skill, /scanSpecTree/, 'do not cite a scanner that does not exist')
+})
+
+test('the protocol records its sources and the approaches deliberately not adopted', () => {
+  const doc = read('skills/_templates/doc-review.md')
+
+  assert.match(doc, /github\.com\/zircote-plugins\/documentation-review/, 'source 1 must be cited')
+  assert.match(doc, /github\.com\/NeonSparklex\/dsh-report-reviewer-zh-Hans/, 'source 2 must be cited')
+  assert.match(doc, /不采用/, 'the rejected approaches must be listed, not implied')
+  assert.match(doc, /机械一致性/, 'doc-guard scope must be excluded explicitly')
+  assert.match(doc, /canon-keeper/, 'canon-keeper scope must be excluded explicitly')
+  assert.match(doc, /评审团/, 'the multi-vendor panel must be excluded explicitly')
+  assert.match(doc, /批注/, 'annotation UI must be excluded explicitly')
+  assert.match(doc, /OCR/, 'the PDF/OCR pipeline must be excluded explicitly')
+})
+
+test('work-types wires both tiers into the review cadence', () => {
+  const types = read('skills/_templates/work-types.md')
+  assert.match(types, /文档审查节奏/, 'the doc cadence must be a first-class section')
+  assert.match(types, /S1–S4/, 'the light tier must be listed')
+  assert.match(types, /D1–D7/, 'the heavy tier must be listed')
+  assert.match(types, /不卡任何门禁/, 'the heavy tier must not gate')
+  assert.match(types, /_templates\/doc-review\.md/, 'the cadence must cite the shared protocol')
+})

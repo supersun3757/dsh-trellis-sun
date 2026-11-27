@@ -94,6 +94,10 @@ description: "行为等价重构工作流：代码优化、模块拆分与清理
 - `apply-notes.md`：分步改动记录、前后对比证据与回归测试输出。
 - `task.json.steps`：由 `dsh_trellis_sun_task_update` 维护的执行步骤清单。
 
+> **文档小审（按需）**：`scan.md` / `refactor-design.md` 定稿前按 `_templates/doc-review.md` 的 S1–S4
+> 过一遍，结论以「文档审查（小审）」节追加进 `apply-notes.md`（不新建产物文件）；S1 / S2 / S3 命中未处理
+> 不得宣称完成。整套文档的深度审查走 `dsh-trellis-sun-doc-review`（大审，不卡门禁）。
+
 ## 反模式（严厉禁止）
 
 - ❌ 借重构名义擅自改动产品业务逻辑或外部接口；
