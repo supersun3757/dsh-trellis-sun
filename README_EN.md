@@ -173,7 +173,7 @@ The plugin registers the following specialized tools:
 
 - **`dsh_trellis_sun_task_create`**: Creates a new task with initial `task.json`, seeds templates, and binds to the current session.
 - **`dsh_trellis_sun_task_update`**: Advances task stages, updates step progress, records verification evidence, or modifies task metadata without changing the current session binding. An explicit `slug` selects only the update target; use the board's activate button to switch tasks.
-- **`dsh_trellis_sun_artifact_update`**: Safely updates task planning documents (such as `prd.md`, `design.md`, `check.md`), restricted by path and filename whitelists.
+- **`dsh_trellis_sun_artifact_update`**: Safely updates task planning documents (such as `prd.md`, `design.md`, `review.md`), restricted by path and filename whitelists.
 - **`dsh_trellis_sun_task_archive`**: Archives a completed task to `.trellis/tasks/archive/YYYY-MM/` and unbinds the session.
 - **`dsh_trellis_sun_task_skip`**: Skips the Trellis workflow for the active session upon user approval, unlocking write tools.
 - **`dsh_trellis_sun_state`**: Inspects and reports Trellis runtime state and task information for the current workspace.

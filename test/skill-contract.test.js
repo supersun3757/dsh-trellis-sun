@@ -1,8 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { ALLOWED_ARTIFACTS, CURRENT_ARTIFACTS, LEGACY_ARTIFACTS } from '../lib/artifact.js'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const read = (rel) => readFileSync(path.join(repoRoot, rel), 'utf8')
@@ -167,6 +168,8 @@ test('graph queries are an external dependency with an explicit degradation path
   assert.match(doc, /Qt/, 'the Qt precision gate must be documented')
   assert.match(doc, /detect_changes/, 'impact analysis is detect_changes, not a tool named impact')
   assert.doesNotMatch(doc, /`impact`/, 'there is no tool named impact')
+  assert.match(doc, /dsh-mcp-client/, 'the connection method must be the built-in MCP client')
+  assert.match(doc, /已证否/, 'the disproved third-party bridge must be recorded as a dead end')
 
   for (const rel of [
     'skills/dsh-trellis-sun-feat/SKILL.md',
@@ -175,4 +178,32 @@ test('graph queries are an external dependency with an explicit degradation path
   ]) {
     assert.match(read(rel), /_templates\/graph-queries\.md/, `${rel} must point at the shared protocol`)
   }
+})
+
+test('the artifact whitelist separates current outputs from retired compatibility names', () => {
+  const templateNames = new Set(
+    ['feat', 'issue', 'refactor'].flatMap((type) =>
+      readdirSync(path.join(repoRoot, 'skills', '_templates', type)),
+    ),
+  )
+
+  // Every advertised name must ship a template. Advertising one that seeding
+  // prunes makes the write a dead end instead of an error (the M1 defect).
+  for (const name of CURRENT_ARTIFACTS) {
+    assert.ok(templateNames.has(name), `${name} is advertised but ships no template`)
+  }
+
+  // Retired names must not ship a template, yet must stay writable: historical
+  // tasks under tasks/ still hold them (feat-09-06 boundary clause).
+  for (const name of LEGACY_ARTIFACTS) {
+    assert.ok(!templateNames.has(name), `${name} is retired but still ships a template`)
+    assert.ok(!CURRENT_ARTIFACTS.has(name), `${name} must not be advertised as a current output`)
+    assert.ok(ALLOWED_ARTIFACTS.has(name), `${name} must stay writable for historical tasks`)
+  }
+
+  assert.deepEqual(
+    [...ALLOWED_ARTIFACTS].sort(),
+    [...CURRENT_ARTIFACTS, ...LEGACY_ARTIFACTS].sort(),
+    'the sandbox must accept exactly the current outputs plus the retired names',
+  )
 })

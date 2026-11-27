@@ -170,7 +170,7 @@ dsh plugin --profile web add link:<克隆目录绝对路径>
 
 - **`dsh_trellis_sun_task_create`**：创建新的工作流任务，生成初始 `task.json` 与阶段交付物模板，并自动绑定当前会话。
 - **`dsh_trellis_sun_task_update`**：推进任务阶段、更新步骤进度、记录验证证据或更新任务信息，不改变当前会话绑定。显式传入 `slug` 只选择更新目标；切换任务请使用看板的激活按钮。
-- **`dsh_trellis_sun_artifact_update`**：安全更新任务交付文档（如 `prd.md`, `design.md`, `check.md` 等），受白名单和路径校验约束。
+- **`dsh_trellis_sun_artifact_update`**：安全更新任务交付文档（如 `prd.md`, `design.md`, `review.md` 等），受白名单和路径校验约束。
 - **`dsh_trellis_sun_task_archive`**：将已完成的任务归档至 `.trellis/tasks/archive/YYYY-MM/` 目录下，并解除当前会话绑定。
 - **`dsh_trellis_sun_task_skip`**：经用户同意后，在当前会话跳过 Trellis 工作流约束，直接放行全量工具权限。
 - **`dsh_trellis_sun_state`**：诊断并返回当前项目的 Trellis 运行时状态与任务信息。
