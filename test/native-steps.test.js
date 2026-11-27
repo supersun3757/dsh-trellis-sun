@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, statSync, readdirSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, statSync, readdirSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {
@@ -8,6 +8,7 @@ import {
   validateStepUpdate,
   applyStepUpdate,
   checkStepsCompletion,
+  validateCreateArgs,
   createTaskRecord,
   updateTaskRecord,
 } from '../lib/task.js'
@@ -21,7 +22,8 @@ import {
 } from '../lib/breadcrumb.js'
 import { assertSafeArtifactPath, ALLOWED_ARTIFACTS, updateTaskArtifact } from '../lib/artifact.js'
 import { ensureProjectSkills, pruneDeprecatedProjectTemplates, DEPRECATED_PROJECT_TEMPLATES, PACKAGE_VERSION, VERSION_FILE_NAME } from '../lib/skills.js'
-import { composeBreadcrumb } from '../lib/state.js'
+import { composeBreadcrumb, SLUG_CHARSET, validateSlug } from '../lib/state.js'
+import { validateArchiveArgs } from '../lib/archive.js'
 
 function mockFs(root) {
   const target = (p) => ({ targetKey: path.resolve(p), displayPath: p })
@@ -824,6 +826,135 @@ test('ensureProjectSkills ships and upgrades the bootstrap migration contract', 
     const upgraded = await ensureProjectSkills(fs, root)
     assert.ok(upgraded.updated.includes('dsh-trellis-sun-spec-bootstrap'))
     assert.match(readFileSync(skillFile, 'utf8'), /迁移分支/)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+// ---------------------------------------------------------------------------
+// 8. Write-path hardening: a task slug is ONE directory segment, and neither
+//    completing gate can be waived by the fields carried in the closing call.
+// ---------------------------------------------------------------------------
+
+test('a task slug must be a single directory segment', () => {
+  // The naming convention alone accepts `feat-01-01-../../x` (its name group is
+  // free text), so path safety is a separate rule every write path shares.
+  for (const bad of ['..', '.', '../..', 'feat-01-01-../../evil', 'a/b', 'a\\b', '']) {
+    assert.equal(SLUG_CHARSET.test(bad), false, `must reject ${JSON.stringify(bad)}`)
+  }
+  for (const good of ['feat-01-15-v1.2', 'issue-10-21-fix', 'trellis-right-phase-panel']) {
+    assert.equal(SLUG_CHARSET.test(good), true, `must accept ${good}`)
+  }
+
+  assert.equal(validateSlug('feat-01-01-../../evil', 'feat').valid, false)
+  assert.equal(validateCreateArgs({ workType: 'feat', title: 'T', slug: 'feat-01-01-../../evil' }).ok, false)
+  assert.equal(validateArchiveArgs({ slug: '..' }).ok, false)
+  assert.equal(validateArchiveArgs({ slug: 'feat-08-17-kanban' }).ok, true)
+})
+
+test('updateTaskRecord refuses a slug that is not a single directory segment', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'trellis-slug-guard-'))
+  const slug = 'feat-08-21-guard'
+  try {
+    const fs = mockFs(root)
+    assert.equal((await createTaskRecord(fs, root, { title: 'Guard', workType: 'feat', slug })).ok, true)
+
+    for (const bad of ['..', '../..', `${slug}/../..`]) {
+      const res = await updateTaskRecord(fs, root, { slug: bad, title: 'pwned' })
+      assert.equal(res.ok, false, `must reject slug ${JSON.stringify(bad)}`)
+      assert.match(res.error, /单个目录名/)
+    }
+    assert.equal(existsSync(path.join(root, 'task.json')), false, 'nothing may land above the tasks dir')
+    assert.equal(existsSync(path.join(root, '.trellis', 'task.json')), false, 'nothing may land above the tasks dir')
+
+    // Path safety only: a legacy task dir without the type-mm-dd prefix is still
+    // updatable (the naming convention is enforced on create, not on update).
+    mkdirSync(path.join(root, '.trellis', 'tasks', 'legacy-task-dir'), { recursive: true })
+    writeFileSync(
+      path.join(root, '.trellis', 'tasks', 'legacy-task-dir', 'task.json'),
+      JSON.stringify({ title: 'legacy', status: 'planning', work: { type: 'feat', stage: 'prd' } }),
+    )
+    const legacy = await updateTaskRecord(fs, root, { slug: 'legacy-task-dir', title: 'legacy renamed' })
+    assert.equal(legacy.ok, true)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('a completing step update cannot waive or clear its own verification gate', () => {
+  // Clearing `verified` in the closing call would store completed + unverified.
+  const aiCertified = [
+    { id: 's1', title: 'ai step', status: 'verifying', verification: 'ai', verified: true, verifiedBy: 'ai' },
+  ]
+  const cleared = applyStepUpdate(aiCertified, { id: 's1', status: 'completed', verified: false })
+  assert.equal(cleared.ok, false)
+  assert.match(cleared.error, /verification_gate/)
+  assert.equal(applyStepUpdate(aiCertified, { id: 's1', status: 'completed' }).ok, true)
+
+  // Lowering the requirement in the closing call waives nothing — even when the
+  // same call claims the sign-off, because the persisted requirement rules.
+  const aiPending = [{ id: 's1', title: 'ai step', status: 'verifying', verification: 'ai', verified: false }]
+  for (const verification of ['none', 'human']) {
+    const res = applyStepUpdate(aiPending, { id: 's1', status: 'completed', verification, verified: true, verifiedBy: 'human' })
+    assert.equal(res.ok, false, `verification: ${verification} must not waive the AI gate`)
+    assert.match(res.error, /verification_gate|human_gate/)
+  }
+
+  const humanPending = [{ id: 's2', title: 'human step', status: 'verifying', verification: 'human', verified: false }]
+  for (const verification of ['none', 'ai']) {
+    const res = applyStepUpdate(humanPending, { id: 's2', status: 'completed', verification, verified: true, verifiedBy: 'human' })
+    assert.equal(res.ok, false, `verification: ${verification} must not waive the human gate`)
+    assert.match(res.error, /human_gate/)
+  }
+
+  // Dropping a human requirement before its sign-off is not a way around it.
+  const downgradeThenVerify = applyStepUpdate(humanPending, { id: 's2', verification: 'none', verified: true })
+  assert.equal(downgradeThenVerify.ok, false)
+  assert.match(downgradeThenVerify.error, /human_gate/)
+
+  // Two-phase happy path: persisted sign-off, then complete.
+  const humanSigned = applyStepUpdate(humanPending, { id: 's2', verified: true, verifiedBy: 'human' })
+  assert.equal(humanSigned.ok, true)
+  assert.equal(applyStepUpdate(humanSigned.steps, { id: 's2', status: 'completed' }).ok, true)
+})
+
+test('a steps replacement cannot launder unfinished work into a completed task', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'trellis-steps-launder-'))
+  const slug = 'feat-08-21-launder'
+  try {
+    const fs = mockFs(root)
+    const created = await createTaskRecord(fs, root, {
+      title: 'Steps laundering',
+      workType: 'feat',
+      slug,
+      steps: [
+        { id: 'step-1', title: 'done', acceptance: ['a'] },
+        { id: 'step-2', title: 'open', acceptance: ['b'], status: 'pending' },
+      ],
+    })
+    assert.equal(created.ok, true)
+    assert.equal((await updateTaskRecord(fs, root, { slug, step: { id: 'step-1', status: 'completed' } })).ok, true)
+
+    // Emptying the list in the closing call must not skip the gate.
+    const emptied = await updateTaskRecord(fs, root, { slug, status: 'completed', steps: [] })
+    assert.equal(emptied.ok, false)
+    assert.match(emptied.error, /steps_incomplete/)
+
+    // Neither may a replacement list holding only finished work.
+    const replaced = await updateTaskRecord(fs, root, {
+      slug,
+      status: 'completed',
+      steps: [{ id: 'step-1', title: 'done', status: 'completed' }],
+    })
+    assert.equal(replaced.ok, false)
+    assert.match(replaced.error, /steps_incomplete/)
+
+    // The rejected calls changed nothing on disk.
+    const stored = JSON.parse(readFileSync(path.join(root, '.trellis', 'tasks', slug, 'task.json'), 'utf8'))
+    assert.notEqual(stored.status, 'completed')
+    assert.equal(stored.steps.length, 2)
+    assert.equal(stored.steps[0].status, 'completed')
+    assert.equal(stored.steps[1].status, 'pending')
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
